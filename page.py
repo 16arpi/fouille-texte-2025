@@ -46,6 +46,11 @@ def page_extract(page: dict) -> dict | None:
 	if text.startswith("#REDIRECTION"):
 		return None
 
+	# TODO: Unify dates
+	# TODO: Skip text below a certain length
+	# TODO: Check for TextQuality in templates
+	# TODO: Try to quantify freqs of cats
+
 	# Pull title & raw text
 	data = {
 		"title": title,
