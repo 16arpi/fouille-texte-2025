@@ -1,3 +1,4 @@
+cookiecutter-data-science
 xmltodict
 rich
 zstandard
