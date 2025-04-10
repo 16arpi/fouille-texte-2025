@@ -1,0 +1,10 @@
+wget https://dumps.wikimedia.org/frwikisource/20250320/frwikisource-20250320-pages-articles.xml.bz2
+
+bzcat frwikisource-20250320-pages-articles.xml.bz2 | .venv/lib/python3.12/site-packages/xmltodict.py 2 | zstd > frwikisource.dicts.zst
+
+
+----
+
+Might prefer the "only current version" one, to avoid havign tod eal with revisions...
+
+wget https://dumps.wikimedia.org/frwikisource/20250320/frwikisource-20250320-pages-meta-current.xml.bz2 -O - | bzcat - | python .venv/lib/python3.12/site-packages/xmltodict.py 2 | zstd > frwikisource-current.dicts.zst

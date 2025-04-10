@@ -1,0 +1,7 @@
+xmltodict
+rich
+zstandard
+pandas
+pandarallel
+tqdm
+wikitextparser
