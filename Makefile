@@ -53,6 +53,7 @@ sync_data_up:
 	aws s3 sync data/ \
 		s3://tal-m1-fouille/data
 
+## Generates the raw dataset
 .PHONY: make_raw_dataset
 make_raw_dataset:
 	./data/make_dataset.sh
