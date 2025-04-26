@@ -6,4 +6,11 @@ python-dotenv
 ruff
 tqdm
 typer
+cookiecutter-data-science
+xmltodict
+rich
+zstandard
+pandas
+pandarallel
+wikitextparser
 -e .
