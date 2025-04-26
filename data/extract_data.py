@@ -11,7 +11,7 @@ from rich.pretty import pprint
 from typing import Iterator
 
 BASE_DIR = Path(__file__).parent.resolve()
-PAGE_ARTICLES_PATH = BASE_DIR / "data" / "raw" / "frwikisource-current.dicts.zst"
+PAGE_ARTICLES_PATH = BASE_DIR / "raw" / "frwikisource-current.dicts.zst"
 
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
