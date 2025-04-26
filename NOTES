@@ -1,3 +1,11 @@
+Create a venv that prefers system packages...
+
+python -m venv --system-site-packages .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+----
+
 wget https://dumps.wikimedia.org/frwikisource/20250320/frwikisource-20250320-pages-articles.xml.bz2
 
 bzcat frwikisource-20250320-pages-articles.xml.bz2 | .venv/lib/python3.12/site-packages/xmltodict.py 2 | zstd > frwikisource.dicts.zst
