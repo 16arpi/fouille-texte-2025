@@ -59,6 +59,11 @@ sync_data_up:
 make_raw_dataset:
 	$(PROJECT_DIR)/data/make_dataset.sh
 
+## Extract relevant data from the raw dataset
+.PHONY: extract_data
+extract_data:
+	$(PROJECT_DIR)/data/extract_data.py
+
 ## Set up Python interpreter environment
 .PHONY: create_environment
 create_environment:
