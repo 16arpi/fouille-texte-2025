@@ -13,4 +13,5 @@ zstandard
 pandas
 pandarallel
 wikitextparser
+evaluate
 -e .
