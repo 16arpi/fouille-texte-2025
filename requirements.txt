@@ -1,8 +1,9 @@
-cookiecutter-data-science
-xmltodict
-rich
-zstandard
-pandas
-pandarallel
+awscli
+loguru
+mkdocs
+pip
+python-dotenv
+ruff
 tqdm
-wikitextparser
+typer
+-e .
