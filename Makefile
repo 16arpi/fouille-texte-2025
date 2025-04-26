@@ -6,6 +6,7 @@ PROJECT_NAME = fouille-texte-2025
 VENV_NAME = fouille
 PYTHON_VERSION = 3.12
 PYTHON_INTERPRETER = python$(PYTHON_VERSION)
+PROJECT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -56,7 +57,7 @@ sync_data_up:
 ## Generates the raw dataset
 .PHONY: make_raw_dataset
 make_raw_dataset:
-	./data/make_dataset.sh
+	$(PROJECT_DIR)/data/make_dataset.sh
 
 ## Set up Python interpreter environment
 .PHONY: create_environment
