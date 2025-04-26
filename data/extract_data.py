@@ -104,7 +104,7 @@ def main() -> None:
 				page = parse_page(data)
 				pprint(page)
 
-				i+=1
+				i += 1
 				if i > 200:
 					break
 
