@@ -28,7 +28,7 @@ DUMP_DATE="20250320"
 # Path to the XMLTODICT CLI script
 XMLTODICT=".venv/lib/python3.12/site-packages/xmltodict.py"
 
-# Do everything in one pass, the only thing that touch local storage is the final step.
+# Do everything in one pass, the only thing that should touch local storage is the final step.
 wget "https://dumps.wikimedia.org/frwikisource/${DUMP_DATE}/frwikisource-${DUMP_DATE}-pages-meta-current.xml.bz2" -O - \
 bzcat - \
 python "${XMLTODICT}" 2 \
