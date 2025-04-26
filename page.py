@@ -11,7 +11,8 @@ from rich.pretty import pprint
 from typing import Iterator
 
 BASE_DIR = Path(__file__).parent.resolve()
-PAGE_ARTICLES_PATH = BASE_DIR / "frwikisource-current.dicts.zst"
+PAGE_ARTICLES_PATH = BASE_DIR / "data" / "raw" / "frwikisource-current.dicts.zst"
+
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
 	try:
@@ -20,6 +21,7 @@ def page_gen(f: RawIOBase) -> Iterator[dict]:
 			yield page
 	except EOFError:
 		pass
+
 
 def page_extract(page: dict) -> dict | None:
 	#pprint(page)
@@ -58,6 +60,7 @@ def page_extract(page: dict) -> dict | None:
 	}
 
 	return data
+
 
 def parse_page(data: dict) -> dict:
 	parsed = wtp.parse(data["text"])
@@ -104,6 +107,7 @@ def main() -> None:
 				i+=1
 				if i > 200:
 					break
+
 
 if __name__ == "__main__":
 	main()
