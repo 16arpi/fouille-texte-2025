@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+#
+# Download a Wikisource dump, convert each page to a Python dictionary, then marshall and compress the whole thing.
+# Beware: requires ~24GB of RAM.
+#
 
 # Sanity check
 if [[ -z "${VIRTUAL_ENV}" ]] ; then
@@ -30,6 +34,6 @@ XMLTODICT=".venv/lib/python3.12/site-packages/xmltodict.py"
 
 # Do everything in one pass, the only thing that should touch local storage is the final step.
 wget "https://dumps.wikimedia.org/frwikisource/${DUMP_DATE}/frwikisource-${DUMP_DATE}-pages-meta-current.xml.bz2" -O - \
-bzcat - \
-python "${XMLTODICT}" 2 \
-zstd > "${RAW_DATA_DIR}/frwikisource-current.dicts.zst"
+| bzcat - \
+| python "${XMLTODICT}" 2 \
+| zstd > "${RAW_DATA_DIR}/frwikisource-current.dicts.zst"
