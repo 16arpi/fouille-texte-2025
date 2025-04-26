@@ -59,7 +59,8 @@ sync_data_up:
 .PHONY: create_environment
 create_environment:
 	$(PYTHON_INTERPRETER) -m venv --system-site-packages --prompt $(VENV_NAME) .venv
-	@echo ">>> New virtualenv created. Activate with:\nsource .venv/bin/activate"
+	@echo ">>> New virtualenv created. Activate with:"
+	@echo "source .venv/bin/activate"
 
 
 
