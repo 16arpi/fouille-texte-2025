@@ -3,6 +3,7 @@
 from io import RawIOBase
 import marshal
 from pathlib import Path
+import re
 from typing import Iterator
 
 from rich.pretty import pprint
@@ -12,6 +13,8 @@ import zstandard as zstd
 
 BASE_DIR = Path(__file__).parent.resolve()
 PAGE_ARTICLES_PATH = BASE_DIR / "raw" / "frwikisource-current.dicts.zst"
+
+NAMESPACE_RE = re.compile(r"^\w+:")
 
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
@@ -31,8 +34,8 @@ def page_extract(page: dict) -> dict | None:
 		return None
 
 	title = page["title"]
-	# TODO: Skip every page w/ a namespace?
-	if title.startswith("Utilisateur:"):
+	# Skip every page w/ a namespace
+	if NAMESPACE_RE.match(title):
 		return None
 
 	if page["revision"]["format"] != "text/x-wiki":
@@ -82,7 +85,12 @@ def parse_page(data: dict) -> dict:
 			continue
 
 		# Strip the %
-		quality = template.arguments[0].value[:-1]
+		value = template.arguments[0].value
+		# c.f., https://fr.wikisource.org/wiki/Aide:Qualit%C3%A9_des_textes
+		if value == "Textes validés":
+			quality = 100
+		else:
+			quality = value[:-1]
 
 	# Convert to plain text
 	text = parsed.plain_text()
