@@ -41,7 +41,7 @@ WS_FR_NAMESPACES = set({
 	"Discussion Page:",
 	"Portail:",
 	"Discussion Portail:",
-	# "Livre:",
+	"Livre:",
 	"Discussion Livre:",
 	"TimedText:",
 	"TimedText talk:",
@@ -143,7 +143,7 @@ def parse_page(data: dict) -> dict:
 		if value == "Textes validés":
 			quality = 100
 		else:
-			quality = value[:-1]
+			quality = int(value[:-1])
 
 	page = {
 		"title": data["title"],
