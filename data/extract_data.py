@@ -127,6 +127,9 @@ def parse_page(data: dict) -> dict:
 		text = text.replace(f"{key}:{value}", "")
 		# NOTE: In the same vein, some front-matter or ToC may include dates, that might be a problem for us...
 
+	# TODO: Do we want to keep stuff that doesn't have a category?
+	#       We obviously can't use it for training, but it cooouuuld maybe be useful during inference?
+
 	# Skip smol pages
 	if len(text) < PAGE_LEN_THRESHOLD:
 		return None
@@ -144,6 +147,10 @@ def parse_page(data: dict) -> dict:
 			quality = 100
 		else:
 			quality = int(value[:-1])
+
+	# Skip unknown quality (because it's often disambiguation pages)
+	if not quality:
+		return None
 
 	page = {
 		"title": data["title"],
@@ -172,7 +179,7 @@ def main() -> None:
 					pprint(page)
 
 				i += 1
-				if i > 400:
+				if i > 5000:
 					break
 
 
