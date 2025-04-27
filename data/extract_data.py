@@ -50,7 +50,6 @@ def page_extract(page: dict) -> dict | None:
 
 	# TODO: Unify dates
 	# TODO: Skip text below a certain length
-	# TODO: Check for TextQuality in templates
 	# TODO: Try to quantify freqs of cats
 
 	# Pull title & raw text
@@ -76,6 +75,15 @@ def parse_page(data: dict) -> dict:
 		if key == "Catégorie" or key == "Catégorie":
 			categories.add(value)
 
+	# Check templates for TextQuality
+	quality = None
+	for template in parsed.templates:
+		if template.name != "TextQuality":
+			continue
+
+		# Strip the %
+		quality = template.arguments[0].value[:-1]
+
 	# Convert to plain text
 	text = parsed.plain_text()
 	# NOTE: Still includes some syntax elements (markdown-esque, as well as the link titles, without the special markup)
@@ -83,6 +91,7 @@ def parse_page(data: dict) -> dict:
 	page = {
 		"title": data["title"],
 		"categories": categories,
+		"quality": quality,
 		"text": text,
 	}
 	return page
