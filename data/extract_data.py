@@ -104,6 +104,10 @@ def page_extract(page: dict) -> dict | None:
 def parse_page(data: dict) -> dict:
 	parsed = wtp.parse(data["text"])
 
+	# Skip pages that are dynamically generated from subpages...
+	if "<pages " in parsed.string:
+		return None
+
 	# Convert to plain text
 	# NOTE: This may be a *tad* aggressive... ;'(
 	text = parsed.plain_text()
