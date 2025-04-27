@@ -142,6 +142,10 @@ def parse_page(data: dict) -> dict:
 	# Check templates for TextQuality
 	quality = None
 	for template in parsed.templates:
+		# Much like the HTML variant above, skip pages that use a template to dynamically embded single djvu pages...
+		if template.name == "Page":
+			return None
+
 		if template.name != "TextQuality":
 			continue
 
@@ -184,7 +188,7 @@ def main() -> None:
 					pprint(page)
 
 				i += 1
-				if i > 50000:
+				if i > 100000:
 					break
 
 
