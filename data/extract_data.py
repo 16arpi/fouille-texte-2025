@@ -50,7 +50,8 @@ WS_FR_NAMESPACES = set({
 	"Sujet:",
 })
 
-PAGE_LEN_THRESHOLD = 256
+# NOTE: That's not enough to get rid of most of the ToC pages...
+PAGE_LEN_THRESHOLD = 384
 
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
