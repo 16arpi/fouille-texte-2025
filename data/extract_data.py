@@ -93,9 +93,12 @@ def parse_page(data: dict) -> dict:
 			quality = value[:-1]
 
 	# Convert to plain text
-	# FIXME: This strips... a *lot* of actual content... ;'(
-	# text = parsed.plain_text()
-	text = data["text"]
+	# NOTE: This may be a *tad* aggressive... ;'(
+	text = parsed.plain_text()
+
+	# Some page have actual content between comment tags... >_<"
+	# for comment in parsed.comments:
+	# 	pprint(comment)
 	# NOTE: Still includes some syntax elements (markdown-esque, as well as the link titles, without the special markup)
 
 	page = {
