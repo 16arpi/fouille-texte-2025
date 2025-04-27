@@ -50,6 +50,8 @@ WS_FR_NAMESPACES = set({
 	"Sujet:",
 })
 
+PAGE_LEN_THRESHOLD = 256
+
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
 	try:
@@ -87,7 +89,6 @@ def page_extract(page: dict) -> dict | None:
 		return None
 
 	# TODO: Unify dates
-	# TODO: Skip text below a certain length
 	# TODO: Try to quantify freqs of cats
 
 	# Pull title & raw text
@@ -102,6 +103,15 @@ def page_extract(page: dict) -> dict | None:
 def parse_page(data: dict) -> dict:
 	parsed = wtp.parse(data["text"])
 
+	# Convert to plain text
+	# NOTE: This may be a *tad* aggressive... ;'(
+	text = parsed.plain_text()
+
+	# Some page have actual content between comment tags... >_<"
+	# for comment in parsed.comments:
+	# 	pprint(comment)
+	# NOTE: Still includes some syntax elements (markdown-esque, as well as the link titles, without the special markup)
+
 	categories = set()
 	# Check links for Categories
 	for link in parsed.wikilinks:
@@ -112,6 +122,14 @@ def parse_page(data: dict) -> dict:
 		key, value = elts[0], elts[1]
 		if key == "Catégorie" or key == "Catégorie":
 			categories.add(value)
+
+		# Drop the links from the actual text. This is obviously particularly critical for the categories, lol ;).
+		text = text.replace(f"{key}:{value}", "")
+		# NOTE: In the same vein, some front-matter or ToC may include dates, that might be a problem for us...
+
+	# Skip smol pages
+	if len(text) < PAGE_LEN_THRESHOLD:
+		return None
 
 	# Check templates for TextQuality
 	quality = None
@@ -126,15 +144,6 @@ def parse_page(data: dict) -> dict:
 			quality = 100
 		else:
 			quality = value[:-1]
-
-	# Convert to plain text
-	# NOTE: This may be a *tad* aggressive... ;'(
-	text = parsed.plain_text()
-
-	# Some page have actual content between comment tags... >_<"
-	# for comment in parsed.comments:
-	# 	pprint(comment)
-	# NOTE: Still includes some syntax elements (markdown-esque, as well as the link titles, without the special markup)
 
 	page = {
 		"title": data["title"],
@@ -159,10 +168,11 @@ def main() -> None:
 				# pprint(page)
 				# pprint(data)
 				page = parse_page(data)
-				pprint(page)
+				if page:
+					pprint(page)
 
 				i += 1
-				if i > 200:
+				if i > 400:
 					break
 
 
