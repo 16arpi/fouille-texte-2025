@@ -14,7 +14,41 @@ import zstandard as zstd
 BASE_DIR = Path(__file__).parent.resolve()
 PAGE_ARTICLES_PATH = BASE_DIR / "raw" / "frwikisource-current.dicts.zst"
 
-NAMESPACE_RE = re.compile(r"^\w+:")
+# c.f., the namespaces element at the top of the XML dump
+WS_FR_NAMESPACES = set({
+	"Média:",
+	"Spécial:",
+	"Discussion:",
+	"Utilisateur:",
+	"Discussion utilisateur:",
+	"Wikisource:",
+	"Discussion Wikisource:",
+	"Fichier:",
+	"Discussion fichier:",
+	"MediaWiki:",
+	"Discussion MediaWiki:",
+	"Modèle:",
+	"Discussion modèle:",
+	"Aide:",
+	"Discussion aide:",
+	"Catégorie:",
+	"Discussion catégorie:",
+	"Transwiki:",
+	"Discussion Transwiki:",
+	"Auteur:",
+	"Discussion Auteur:",
+	# "Page:",
+	"Discussion Page:",
+	"Portail:",
+	"Discussion Portail:",
+	# "Livre:",
+	"Discussion Livre:",
+	"TimedText:",
+	"TimedText talk:",
+	"Module:",
+	"Discussion module:",
+	"Sujet:",
+})
 
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
@@ -35,8 +69,9 @@ def page_extract(page: dict) -> dict | None:
 
 	title = page["title"]
 	# Skip every page w/ a namespace
-	if NAMESPACE_RE.match(title):
-		return None
+	for ns in WS_FR_NAMESPACES:
+		if title.startswith(ns):
+			return None
 
 	if page["revision"]["format"] != "text/x-wiki":
 		# e.g., CSS
