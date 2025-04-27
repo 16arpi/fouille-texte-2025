@@ -104,7 +104,7 @@ def page_extract(page: dict) -> dict | None:
 def parse_page(data: dict) -> dict:
 	parsed = wtp.parse(data["text"])
 
-	# Skip pages that are dynamically generated from subpages...
+	# Skip pages that are dynamically generated from single djvu pages...
 	if "<pages " in parsed.string:
 		return None
 
@@ -184,7 +184,7 @@ def main() -> None:
 					pprint(page)
 
 				i += 1
-				if i > 5000:
+				if i > 50000:
 					break
 
 
