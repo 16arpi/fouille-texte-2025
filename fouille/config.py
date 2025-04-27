@@ -24,9 +24,9 @@ FIGURES_DIR = REPORTS_DIR / "figures"
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135
 try:
-    from tqdm import tqdm
+	from tqdm import tqdm
 
-    logger.remove(0)
-    logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
+	logger.remove(0)
+	logger.add(lambda msg: tqdm.write(msg, end=""), colorize=True)
 except ModuleNotFoundError:
-    pass
+	pass

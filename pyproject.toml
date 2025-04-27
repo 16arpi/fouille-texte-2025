@@ -7,7 +7,8 @@ name = "fouille"
 version = "0.0.1"
 description = "End of term project"
 authors = [
-  { name = "C\u00e9sar Pichon \u0026 Damien Biguet" },
+  { name = "César Pichon", email = "cesarpichon@gmail.com" },
+  { name = "Damien Biguet", email = "ninuje@gmail.com" },
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
@@ -19,9 +20,10 @@ requires-python = "~=3.12.0"
 
 
 [tool.ruff]
+respect-gitignore = false
 line-length = 122
 src = ["fouille"]
-include = ["pyproject.toml", "fouille/**/*.py"]
+include = ["pyproject.toml", "fouille/**/*.py", "data/*.py"]
 
 [tool.ruff.lint]
 extend-select = ["I"]  # Add import sorting
@@ -30,3 +32,5 @@ extend-select = ["I"]  # Add import sorting
 known-first-party = ["fouille"]
 force-sort-within-sections = true
 
+[tool.ruff.format]
+indent-style = "tab"

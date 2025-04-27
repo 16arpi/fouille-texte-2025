@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import marshal
-import wikitextparser as wtp
-import rich.progress
-import zstandard as zstd
-
 from io import RawIOBase
+import marshal
 from pathlib import Path
-from rich.pretty import pprint
 from typing import Iterator
+
+from rich.pretty import pprint
+import rich.progress
+import wikitextparser as wtp
+import zstandard as zstd
 
 BASE_DIR = Path(__file__).parent.resolve()
 PAGE_ARTICLES_PATH = BASE_DIR / "raw" / "frwikisource-current.dicts.zst"
@@ -24,7 +24,7 @@ def page_gen(f: RawIOBase) -> Iterator[dict]:
 
 
 def page_extract(page: dict) -> dict | None:
-	#pprint(page)
+	# pprint(page)
 
 	if "title" not in page:
 		# e.g., First item
@@ -96,11 +96,11 @@ def main() -> None:
 			for page in page_gen(reader):
 				data = page_extract(page)
 				if not data:
-					#pprint(page)
+					# pprint(page)
 					continue
 
-				#pprint(page)
-				#pprint(data)
+				# pprint(page)
+				# pprint(data)
 				page = parse_page(data)
 				pprint(page)
 
