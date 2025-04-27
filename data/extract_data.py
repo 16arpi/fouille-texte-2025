@@ -93,7 +93,9 @@ def parse_page(data: dict) -> dict:
 			quality = value[:-1]
 
 	# Convert to plain text
-	text = parsed.plain_text()
+	# FIXME: This strips... a *lot* of actual content... ;'(
+	# text = parsed.plain_text()
+	text = data["text"]
 	# NOTE: Still includes some syntax elements (markdown-esque, as well as the link titles, without the special markup)
 
 	page = {
