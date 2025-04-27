@@ -6,13 +6,13 @@
 
 # Sanity check
 if [[ -z "${VIRTUAL_ENV}" ]] ; then
-	echo "!! Not in a venv"
+	>&2 echo "!! Not in a venv"
 	exit 1
 fi
 
 for tool in wget bzcat zstd ; do
 	if ! command -v "${tool}" ; then
-		echo "!! ${tool} is not available"
+		>&2 echo "!! ${tool} is not available"
 		exit 1
 	fi
 done
