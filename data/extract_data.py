@@ -230,7 +230,7 @@ def parse_page(data: dict) -> dict:
 	if title.startswith("Page:"):
 		for book_title, cats in BOOK_CATEGORIES.items():
 			if book_title in title:
-				logger.opt(colors=True).info("Restored categories from <cyan>{book_title}</cyan>")
+				logger.opt(colors=True).info(f"Restored categories from <cyan>{book_title}</cyan>")
 				categories |= cats
 				break
 
