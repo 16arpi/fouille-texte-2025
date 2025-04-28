@@ -181,11 +181,6 @@ def parse_page(data: dict) -> dict:
 				BOOK_CATEGORIES[book_title] |= categories
 		return None
 
-	# Skip smol pages
-	if len(text) < PAGE_LEN_THRESHOLD:
-		logger.warning("Is below the length threshold")
-		return None
-
 	# Check templates for TextQuality
 	quality = None
 	for template in parsed.templates:
@@ -206,6 +201,11 @@ def parse_page(data: dict) -> dict:
 		else:
 			# Strip the %
 			quality = int(value[:-1])
+
+	# Skip smol pages
+	if len(text) < PAGE_LEN_THRESHOLD:
+		logger.warning("Is below the length threshold")
+		return None
 
 	# Check the pagequality element, too...
 	# NOTE: Possibly only if data["model"] is "proofread-page"?
@@ -230,8 +230,13 @@ def parse_page(data: dict) -> dict:
 	if title.startswith("Page:"):
 		for book_title, cats in BOOK_CATEGORIES.items():
 			if book_title in title:
+				logger.opt(colors=True).info("Restored categories from <cyan>{book_title}</cyan>")
 				categories |= cats
 				break
+
+	# Warn if we found no categories...
+	if not bool(categories):
+		logger.warning("No categories were found!")
 
 	page = {
 		"title": data["title"],
