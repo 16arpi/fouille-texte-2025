@@ -147,7 +147,7 @@ def parse_page(data: dict) -> dict:
 			continue
 
 		key, value = elts[0], elts[1]
-		ci_key = key.loawer()
+		ci_key = key.lower()
 		if ci_key == "catégorie" or ci_key == "category":
 			categories.add(value)
 
@@ -167,12 +167,13 @@ def parse_page(data: dict) -> dict:
 	# Check templates for TextQuality
 	quality = None
 	for template in parsed.templates:
+		key = template.name.lower()
 		# Much like the HTML variant above, skip pages that use a template to dynamically embded single djvu pages...
-		if template.name.lower() == "page":
+		if key == "page":
 			logger.warning("Embeds content via the Page template")
 			return None
 
-		if template.name.lower() != "textquality":
+		if key != "textquality":
 			continue
 
 		value = template.arguments[0].value
