@@ -13,7 +13,9 @@ from loguru import logger
 import pandas as pd
 import re
 import rich.progress
+from rich.console import Console
 from rich.pretty import pprint
+from rich.text import Text
 import wikitextparser as wtp
 import zstandard as zstd
 
@@ -85,7 +87,7 @@ def page_extract(page: dict) -> dict | None:
 		return None
 
 	title = page["title"]
-	logger.info(title)
+	logger.opt(colors=True).info(f"Processing <blue>{title}</blue>")
 	# Skip every page w/ a namespace
 	for ns in WS_FR_NAMESPACES:
 		if title.startswith(ns):
@@ -208,7 +210,7 @@ def parse_page(data: dict) -> dict:
 
 def main() -> None:
 	pages = []
-	with rich.progress.open(PAGE_ARTICLES_PATH, "rb") as fh:
+	with rich.progress.open(PAGE_ARTICLES_PATH, "rb", console=console) as fh:
 		dctx = zstd.ZstdDecompressor()
 		with dctx.stream_reader(fh) as reader:
 			for page in page_gen(reader):
@@ -223,7 +225,7 @@ def main() -> None:
 				if page:
 					# pprint(page)
 					pages.append(page)
-					logger.info(f"Extracted {page["title"]}")
+					logger.opt(colors=True).info(f"Extracted <green>{page["title"]}</green>")
 	logger.info(f"Extracted {len(pages)} pages")
 
 	# Convert to a DataFrame
@@ -240,6 +242,18 @@ def main() -> None:
 	# Store in parquet
 	logger.info("Dumping to disk...")
 	df.to_parquet(RAW_PARQUET_PATH)
+
+
+# c.f., https://github.com/Delgan/loguru/issues/444#issuecomment-2507148185
+console = Console(stderr=True)
+logger.configure(
+	handlers=[
+		{
+			"sink": lambda s: console.print(Text.from_ansi(s)),
+			"colorize": console.is_terminal,
+		}
+	]
+)
 
 
 if __name__ == "__main__":
