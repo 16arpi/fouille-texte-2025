@@ -250,6 +250,7 @@ logger.configure(
 	handlers=[
 		{
 			"sink": lambda s: console.print(Text.from_ansi(s)),
+			"level": "ERROR",
 			"colorize": console.is_terminal,
 		}
 	]
