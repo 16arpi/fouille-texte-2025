@@ -11,8 +11,7 @@ from typing import Iterator
 
 import pandas as pd
 import rich.progress
-
-# from rich.pretty import pprint
+from rich.pretty import pprint
 import wikitextparser as wtp
 import zstandard as zstd
 
@@ -81,22 +80,27 @@ def page_extract(page: dict) -> dict | None:
 		return None
 
 	title = page["title"]
+	pprint(title)
 	# Skip every page w/ a namespace
 	for ns in WS_FR_NAMESPACES:
 		if title.startswith(ns):
+			print("Unwanted namespace")
 			return None
 
 	if page["revision"]["format"] != "text/x-wiki":
 		# e.g., CSS
+		print("Not a wikitext page")
 		return None
 
 	if "#text" not in page["revision"]["text"]:
 		# e.g., :?
+		print("No text")
 		return None
 
 	text = page["revision"]["text"]["#text"]
 	# Skip redirs
 	if text.startswith("#REDIRECTION"):
+		print("Is a redirection")
 		return None
 
 	# TODO: Unify dates
@@ -116,6 +120,7 @@ def parse_page(data: dict) -> dict:
 
 	# Skip pages that are dynamically generated from single djvu pages...
 	if "<pages " in parsed.string:
+		print("Embeds content via the pages element")
 		return None
 
 	# Convert to plain text
@@ -148,6 +153,7 @@ def parse_page(data: dict) -> dict:
 
 	# Skip smol pages
 	if len(text) < PAGE_LEN_THRESHOLD:
+		print("Is below the length threshold")
 		return None
 
 	# Check templates for TextQuality
@@ -155,6 +161,7 @@ def parse_page(data: dict) -> dict:
 	for template in parsed.templates:
 		# Much like the HTML variant above, skip pages that use a template to dynamically embded single djvu pages...
 		if template.name == "Page":
+			print("Embeds content via the Page template")
 			return None
 
 		if template.name != "TextQuality":
@@ -170,6 +177,7 @@ def parse_page(data: dict) -> dict:
 
 	# Skip unknown quality (because it's often disambiguation pages)
 	if not quality:
+		print("Low TextQuality")
 		return None
 
 	page = {
@@ -198,10 +206,18 @@ def main() -> None:
 				if page:
 					# pprint(page)
 					pages.append(page)
+					pprint(f"Extracted {page.title}")
 
 	# Convert to a DataFrame
 	print("Building a dataframe...")
 	df = pd.DataFrame(pages)
+
+	# Use appropriate datatypes...
+	df["title"] = df["title"].astype("string")
+	# NOTE: This a set, not a single value :/
+	# df["categories"] = df["categories"].astype("category")
+	df["quality"] = pd.to_numeric(df["quality"], downcast="unsigned")
+	df["text"] = df["text"].astype("string")
 
 	# Store in parquet
 	print("Dumping to disk...")
