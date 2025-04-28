@@ -146,8 +146,9 @@ def parse_page(data: dict) -> dict:
 		if len(elts) < 2:
 			continue
 
-		key, value = elts[0].lower(), elts[1]
-		if key == "catégorie" or key == "category":
+		key, value = elts[0], elts[1]
+		ci_key = key.loawer()
+		if ci_key == "catégorie" or ci_key == "category":
 			categories.add(value)
 
 		# Drop the links from the actual text. This is obviously particularly critical for the categories, lol ;).
@@ -255,7 +256,7 @@ logger.configure(
 		{
 			"sink": lambda s: console.print(Text.from_ansi(s)),
 			# TODO: Make the logging level configurable...
-			"level": "ERROR",
+			# "level": "ERROR",
 			"colorize": console.is_terminal,
 		}
 	]
