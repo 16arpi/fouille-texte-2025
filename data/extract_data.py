@@ -4,6 +4,7 @@
 # NOTE: Beware, this will take *a while* (~30 minutes, at least twice that with verbose logging).
 #
 
+from collections import defaultdict
 from io import RawIOBase
 import marshal
 from pathlib import Path
@@ -75,6 +76,9 @@ PQ_LEVEL_RE = re.compile(r"level=\"(\d)\"")
 # NOTE: That's not enough to get rid of most of the ToC pages...
 PAGE_LEN_THRESHOLD = 384
 
+# Pages under the Page: namespace do *not* have categories, so we try to stitch thigs back together...
+BOOK_CATEGORIES = defaultdict(default_factory=set)
+
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
 	try:
@@ -131,11 +135,7 @@ def page_extract(page: dict) -> dict | None:
 
 def parse_page(data: dict) -> dict:
 	parsed = wtp.parse(data["text"])
-
-	# Skip pages that are dynamically generated from single djvu pages...
-	if "<pages " in parsed.string:
-		logger.warning("Embeds content via the pages element")
-		return None
+	title = data["title"]
 
 	# Convert to plain text
 	# NOTE: This may be a *tad* aggressive... ;'(
@@ -166,6 +166,12 @@ def parse_page(data: dict) -> dict:
 	# TODO: Do we want to keep stuff that doesn't have a category?
 	#       We obviously can't use it for training, but it cooouuuld maybe be useful during inference?
 
+	# Skip pages that are dynamically generated from single djvu pages...
+	if "<pages " in parsed.string:
+		logger.warning("Embeds content via the pages element")
+		BOOK_CATEGORIES[title] |= categories
+		return None
+
 	# Skip smol pages
 	if len(text) < PAGE_LEN_THRESHOLD:
 		logger.warning("Is below the length threshold")
@@ -178,6 +184,7 @@ def parse_page(data: dict) -> dict:
 		# Much like the HTML variant above, skip pages that use a template to dynamically embded single djvu pages...
 		if key == "page":
 			logger.warning("Embeds content via the Page template")
+			BOOK_CATEGORIES[title] |= categories
 			return None
 
 		if key != "textquality":
@@ -209,6 +216,13 @@ def parse_page(data: dict) -> dict:
 	if not quality:
 		logger.warning("Low TextQuality")
 		return None
+
+	# Try to restore categories on Page: pages...
+	if title.startswith("Page:"):
+		for book_title, cats in BOOK_CATEGORIES.items():
+			if book_title in title:
+				categories |= cats
+				break
 
 	page = {
 		"title": data["title"],
