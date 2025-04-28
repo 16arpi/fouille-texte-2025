@@ -283,7 +283,9 @@ def main() -> None:
 		categories = page["categories"]
 		for book_title, cats in BOOK_CATEGORIES.items():
 			if book_title in title:
-				logger.opt(colors=True).info(f"Restored categories to <green>{title}</green> from <cyan>{book_title}</cyan>")
+				logger.opt(colors=True).info(
+					f"Restored categories to <green>{title}</green> from <cyan>{book_title}</cyan>"
+				)
 				categories |= cats
 				break
 
