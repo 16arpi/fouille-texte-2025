@@ -50,10 +50,12 @@ WS_FR_NAMESPACES = set(
 		"Discussion Auteur:",
 		# NOTE: We want these:
 		#       they contain the actual data that gets dynamically embedded via Page templates and <pages/> elements...
+		#       i.e., model is proofread-page
 		# "Page:",
 		"Discussion Page:",
 		"Portail:",
 		"Discussion Portail:",
+		# model is proofread-index
 		"Livre:",
 		"Discussion Livre:",
 		"TimedText:",
@@ -89,6 +91,7 @@ def page_extract(page: dict) -> dict | None:
 
 	title = page["title"]
 	logger.opt(colors=True).info(f"Processing <blue>{title}</blue>")
+
 	# Skip every page w/ a namespace
 	for ns in WS_FR_NAMESPACES:
 		if title.startswith(ns):
