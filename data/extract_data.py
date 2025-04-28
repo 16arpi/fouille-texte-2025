@@ -9,6 +9,7 @@ import marshal
 from pathlib import Path
 from typing import Iterator
 
+from loguru import logger
 import pandas as pd
 import re
 import rich.progress
@@ -84,27 +85,27 @@ def page_extract(page: dict) -> dict | None:
 		return None
 
 	title = page["title"]
-	pprint(title)
+	logger.info(title)
 	# Skip every page w/ a namespace
 	for ns in WS_FR_NAMESPACES:
 		if title.startswith(ns):
-			print("Unwanted namespace")
+			logger.warning("Unwanted namespace")
 			return None
 
 	if page["revision"]["format"] != "text/x-wiki":
 		# e.g., CSS
-		print("Not a wikitext page")
+		logger.warning("Not a wikitext page")
 		return None
 
 	if "#text" not in page["revision"]["text"]:
 		# e.g., :?
-		print("No text")
+		logger.warning("No text")
 		return None
 
 	text = page["revision"]["text"]["#text"]
 	# Skip redirs
 	if text.startswith("#REDIRECTION"):
-		print("Is a redirection")
+		logger.warning("Is a redirection")
 		return None
 
 	# TODO: Unify dates
@@ -124,7 +125,7 @@ def parse_page(data: dict) -> dict:
 
 	# Skip pages that are dynamically generated from single djvu pages...
 	if "<pages " in parsed.string:
-		print("Embeds content via the pages element")
+		logger.warning("Embeds content via the pages element")
 		return None
 
 	# Convert to plain text
@@ -157,7 +158,7 @@ def parse_page(data: dict) -> dict:
 
 	# Skip smol pages
 	if len(text) < PAGE_LEN_THRESHOLD:
-		print("Is below the length threshold")
+		logger.warning("Is below the length threshold")
 		return None
 
 	# Check templates for TextQuality
@@ -165,7 +166,7 @@ def parse_page(data: dict) -> dict:
 	for template in parsed.templates:
 		# Much like the HTML variant above, skip pages that use a template to dynamically embded single djvu pages...
 		if template.name.lower() == "page":
-			print("Embeds content via the Page template")
+			logger.warning("Embeds content via the Page template")
 			return None
 
 		if template.name.lower() != "textquality":
@@ -189,11 +190,11 @@ def parse_page(data: dict) -> dict:
 				m = PQ_LEVEL_RE.search(m.group(0))
 				if m:
 					# Scale is 0 to 4, make it match TextQuality
-					quality = int(group(1)) * 25
+					quality = int(m.group(1)) * 25
 
 	# Skip unknown quality (because it's often disambiguation pages)
 	if not quality:
-		print("Low TextQuality")
+		logger.warning("Low TextQuality")
 		return None
 
 	page = {
@@ -222,11 +223,11 @@ def main() -> None:
 				if page:
 					# pprint(page)
 					pages.append(page)
-					pprint(f"Extracted {page["title"]}")
-	print(f"Extracted {len(pages)} pages")
+					logger.info(f"Extracted {page["title"]}")
+	logger.info(f"Extracted {len(pages)} pages")
 
 	# Convert to a DataFrame
-	print("Building a dataframe...")
+	logger.info("Building a dataframe...")
 	df = pd.DataFrame(pages)
 
 	# Use appropriate datatypes...
@@ -237,7 +238,7 @@ def main() -> None:
 	df["text"] = df["text"].astype("string")
 
 	# Store in parquet
-	print("Dumping to disk...")
+	logger.info("Dumping to disk...")
 	df.to_parquet(RAW_PARQUET_PATH)
 
 
