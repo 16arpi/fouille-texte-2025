@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#
+# Initial data extraction pass.
+# NOTE: Beware, this will take *a while* (~30 minutes).
+#
 
 from io import RawIOBase
 import marshal
@@ -6,6 +10,8 @@ from pathlib import Path
 import re
 from typing import Iterator
 
+import numpy as np
+import pandas as pd
 from rich.pretty import pprint
 import rich.progress
 import wikitextparser as wtp
@@ -13,6 +19,7 @@ import zstandard as zstd
 
 BASE_DIR = Path(__file__).parent.resolve()
 PAGE_ARTICLES_PATH = BASE_DIR / "raw" / "frwikisource-current.dicts.zst"
+RAW_PARQUET_PATH = BASE_DIR / "interim" / "frwikisource-current-raw.parquet"
 
 # c.f., the namespaces element at the top of the XML dump
 WS_FR_NAMESPACES = set({
@@ -37,6 +44,8 @@ WS_FR_NAMESPACES = set({
 	"Discussion Transwiki:",
 	"Auteur:",
 	"Discussion Auteur:",
+	# NOTE: We want these ones:
+	#       they contain the actual data that gets dynamically embedded via Page templates and <pages/> elements...
 	# "Page:",
 	"Discussion Page:",
 	"Portail:",
@@ -131,6 +140,7 @@ def parse_page(data: dict) -> dict:
 		# Drop the links from the actual text. This is obviously particularly critical for the categories, lol ;).
 		text = text.replace(f"{key}:{value}", "")
 		# NOTE: In the same vein, some front-matter or ToC may include dates, that might be a problem for us...
+		# NOTE: So can the title, for that matter...
 
 	# TODO: Do we want to keep stuff that doesn't have a category?
 	#       We obviously can't use it for training, but it cooouuuld maybe be useful during inference?
@@ -149,12 +159,12 @@ def parse_page(data: dict) -> dict:
 		if template.name != "TextQuality":
 			continue
 
-		# Strip the %
 		value = template.arguments[0].value
 		# c.f., https://fr.wikisource.org/wiki/Aide:Qualit%C3%A9_des_textes
 		if value == "Textes validés":
 			quality = 100
 		else:
+			# Strip the %
 			quality = int(value[:-1])
 
 	# Skip unknown quality (because it's often disambiguation pages)
@@ -171,10 +181,10 @@ def parse_page(data: dict) -> dict:
 
 
 def main() -> None:
+	pages = []
 	with rich.progress.open(PAGE_ARTICLES_PATH, "rb") as fh:
 		dctx = zstd.ZstdDecompressor()
 		with dctx.stream_reader(fh) as reader:
-			i = 0
 			for page in page_gen(reader):
 				data = page_extract(page)
 				if not data:
@@ -185,11 +195,16 @@ def main() -> None:
 				# pprint(data)
 				page = parse_page(data)
 				if page:
-					pprint(page)
+					# pprint(page)
+					pages.append(page)
 
-				i += 1
-				if i > 100000:
-					break
+	# Convert to a DataFrame
+	print("Building a dataframe...")
+	df = pd.DataFrame(pages)
+
+	# Store in parquet
+	print("Dumping to disk...")
+	df.to_parquet(RAW_PARQUET_PATH)
 
 
 if __name__ == "__main__":
