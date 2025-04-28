@@ -251,7 +251,7 @@ def main() -> None:
 
 	# Store in parquet
 	logger.info("Dumping to disk...")
-	df.to_parquet(RAW_PARQUET_PATH)
+	df.to_parquet(RAW_PARQUET_PATH, compression="zstd")
 
 
 # c.f., https://github.com/Delgan/loguru/issues/444#issuecomment-2507148185
