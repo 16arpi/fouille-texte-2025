@@ -207,6 +207,7 @@ def main() -> None:
 					# pprint(page)
 					pages.append(page)
 					pprint(f"Extracted {page["title"]}")
+	print(f"Extracted {len(pages)} pages")
 
 	# Convert to a DataFrame
 	print("Building a dataframe...")
