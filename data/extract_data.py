@@ -7,13 +7,12 @@
 from io import RawIOBase
 import marshal
 from pathlib import Path
-import re
 from typing import Iterator
 
-import numpy as np
 import pandas as pd
-from rich.pretty import pprint
 import rich.progress
+
+# from rich.pretty import pprint
 import wikitextparser as wtp
 import zstandard as zstd
 
@@ -22,42 +21,44 @@ PAGE_ARTICLES_PATH = BASE_DIR / "raw" / "frwikisource-current.dicts.zst"
 RAW_PARQUET_PATH = BASE_DIR / "interim" / "frwikisource-current-raw.parquet"
 
 # c.f., the namespaces element at the top of the XML dump
-WS_FR_NAMESPACES = set({
-	"Média:",
-	"Spécial:",
-	"Discussion:",
-	"Utilisateur:",
-	"Discussion utilisateur:",
-	"Wikisource:",
-	"Discussion Wikisource:",
-	"Fichier:",
-	"Discussion fichier:",
-	"MediaWiki:",
-	"Discussion MediaWiki:",
-	"Modèle:",
-	"Discussion modèle:",
-	"Aide:",
-	"Discussion aide:",
-	"Catégorie:",
-	"Discussion catégorie:",
-	"Transwiki:",
-	"Discussion Transwiki:",
-	"Auteur:",
-	"Discussion Auteur:",
-	# NOTE: We want these ones:
-	#       they contain the actual data that gets dynamically embedded via Page templates and <pages/> elements...
-	# "Page:",
-	"Discussion Page:",
-	"Portail:",
-	"Discussion Portail:",
-	"Livre:",
-	"Discussion Livre:",
-	"TimedText:",
-	"TimedText talk:",
-	"Module:",
-	"Discussion module:",
-	"Sujet:",
-})
+WS_FR_NAMESPACES = set(
+	{
+		"Média:",
+		"Spécial:",
+		"Discussion:",
+		"Utilisateur:",
+		"Discussion utilisateur:",
+		"Wikisource:",
+		"Discussion Wikisource:",
+		"Fichier:",
+		"Discussion fichier:",
+		"MediaWiki:",
+		"Discussion MediaWiki:",
+		"Modèle:",
+		"Discussion modèle:",
+		"Aide:",
+		"Discussion aide:",
+		"Catégorie:",
+		"Discussion catégorie:",
+		"Transwiki:",
+		"Discussion Transwiki:",
+		"Auteur:",
+		"Discussion Auteur:",
+		# NOTE: We want these ones:
+		#       they contain the actual data that gets dynamically embedded via Page templates and <pages/> elements...
+		# "Page:",
+		"Discussion Page:",
+		"Portail:",
+		"Discussion Portail:",
+		"Livre:",
+		"Discussion Livre:",
+		"TimedText:",
+		"TimedText talk:",
+		"Module:",
+		"Discussion module:",
+		"Sujet:",
+	}
+)
 
 # NOTE: That's not enough to get rid of most of the ToC pages...
 PAGE_LEN_THRESHOLD = 384
