@@ -294,6 +294,7 @@ def main() -> None:
 	df = pd.DataFrame(pages)
 
 	# Use appropriate datatypes...
+	# NOTE: We miiiight actually want to keep everything except quality as native Python objects, we'll see...
 	df = df.astype(
 		{
 			"title": "string",
