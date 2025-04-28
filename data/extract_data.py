@@ -247,11 +247,12 @@ def main() -> None:
 	df = df.astype(
 		{
 			"title": "string",
-			"categories": "string",
 			"quality": np.uint8,  # "category",
 			"text": "string",
 		}
 	)
+	# This feels stupid... Then again, pd.array doesn't handle sets as input anyway...
+	df["categories"] = df["categories"].apply(lambda x: pd.array(list(x), dtype="string"))
 
 	pprint(df)
 
