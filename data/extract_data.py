@@ -11,6 +11,7 @@ import re
 from typing import Iterator
 
 from loguru import logger
+import numpy as np
 import pandas as pd
 from rich.console import Console
 from rich.pretty import pprint
@@ -237,11 +238,14 @@ def main() -> None:
 	df = pd.DataFrame(pages)
 
 	# Use appropriate datatypes...
-	df["title"] = df["title"].astype("string")
-	# NOTE: This a set, not a single value :/
-	# df["categories"] = df["categories"].astype("category")
-	df["quality"] = pd.to_numeric(df["quality"], downcast="unsigned")
-	df["text"] = df["text"].astype("string")
+	df = df.astype(
+		{
+			"title": "string",
+			"categories": "string",
+			"quality": np.uint8,  # "category",
+			"text": "string",
+		}
+	)
 
 	pprint(df)
 
