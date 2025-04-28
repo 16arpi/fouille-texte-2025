@@ -206,7 +206,7 @@ def main() -> None:
 				if page:
 					# pprint(page)
 					pages.append(page)
-					pprint(f"Extracted {page.title}")
+					pprint(f"Extracted {page["title"]}")
 
 	# Convert to a DataFrame
 	print("Building a dataframe...")
