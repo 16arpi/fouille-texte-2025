@@ -17,7 +17,7 @@ import zstandard as zstd
 
 BASE_DIR = Path(__file__).parent.resolve()
 PAGE_ARTICLES_PATH = BASE_DIR / "raw" / "frwikisource-current.dicts.zst"
-RAW_PARQUET_PATH = BASE_DIR / "interim" / "frwikisource-current-raw.parquet"
+RAW_PARQUET_PATH = BASE_DIR / "interim" / "frwikisource-current.parquet"
 
 # c.f., the namespaces element at the top of the XML dump
 WS_FR_NAMESPACES = set(
