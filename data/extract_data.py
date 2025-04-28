@@ -188,7 +188,9 @@ def parse_page(data: dict) -> dict:
 		# Much like the HTML variant above, skip pages that use a template to dynamically embded single djvu pages...
 		if key == "page":
 			logger.warning("Embeds content via the Page template")
-			BOOK_CATEGORIES[title] |= categories
+			book_title = template.arguments[0].value
+			logger.opt(colors=True).info(f"From <red>{book_title}</red>")
+			BOOK_CATEGORIES[book_title] |= categories
 			return None
 
 		if key != "textquality":
@@ -266,6 +268,23 @@ def main() -> None:
 					pages.append(page)
 					logger.opt(colors=True).info(f"Extracted <green>{page['title']}</green>")
 	logger.info(f"Extracted {len(pages)} pages")
+
+	# NOTE: Given that we cannot guarantee the order in which we parse pages,
+	#       we need to do another pass to restore categories from BOOK_CATEGORIES...
+	#       i.e., We're likely to have seen most of the Page: pages *before*
+	#       we saw the page that embeds them from which we could pull categories...
+	logger.info("Restore categories on Page: pages...")
+	for page in pages:
+		title = page["title"]
+		if not title.startswith("Page:"):
+			continue
+
+		categories = page["categories"]
+		for book_title, cats in BOOK_CATEGORIES.items():
+			if book_title in title:
+				logger.opt(colors=True).info(f"Restored categories from <cyan>{book_title}</cyan>")
+				categories |= cats
+				break
 
 	# Convert to a DataFrame
 	logger.info("Building a dataframe...")
