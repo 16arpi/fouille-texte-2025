@@ -185,6 +185,8 @@ def parse_page(data: dict) -> dict:
 	# Check the pagequality element, too...
 	# NOTE: Possibly only if data["model"] is "proofread-page"?
 	#       (We don't currently save that field in page_extract, though ;)).
+	#       You should only find proofread-page models in the Page namespace, anyway.
+	#       (Conversely, proofread-index models are in the Livre namespace, which we skip already).
 	if not quality:
 		if "<pagequality " in parsed.string:
 			m = PQ_RE.search(parsed.string)
