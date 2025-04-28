@@ -72,12 +72,14 @@ WS_FR_NAMESPACES = set(
 
 PQ_RE = re.compile(r"<pagequality [^>]+/>")
 PQ_LEVEL_RE = re.compile(r"level=\"(\d)\"")
+PAGES_RE = re.compile(r"<pages [^>]+/>")
+PAGES_INDEX_RE = re.compile(r"index=\"([^\"]+)\"")
 
 # NOTE: That's not enough to get rid of most of the ToC pages...
 PAGE_LEN_THRESHOLD = 384
 
 # Pages under the Page: namespace do *not* have categories, so we try to stitch thigs back together...
-BOOK_CATEGORIES = defaultdict(default_factory=set)
+BOOK_CATEGORIES = defaultdict(set)
 
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
@@ -169,7 +171,14 @@ def parse_page(data: dict) -> dict:
 	# Skip pages that are dynamically generated from single djvu pages...
 	if "<pages " in parsed.string:
 		logger.warning("Embeds content via the pages element")
-		BOOK_CATEGORIES[title] |= categories
+		# NOTE: Try to use the actual index value, which should match the Page: pages...
+		m = PAGES_RE.search(parsed.string)
+		if m:
+			m = PAGES_INDEX_RE.search(m.group(0))
+			if m:
+				book_title = m.group(1)
+				logger.opt(colors=True).info(f"From <red>{book_title}</red>")
+				BOOK_CATEGORIES[book_title] |= categories
 		return None
 
 	# Skip smol pages
