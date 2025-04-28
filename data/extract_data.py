@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 #
 # Initial data extraction pass.
-# NOTE: Beware, this will take *a while* (~30 minutes).
+# NOTE: Beware, this will take *a while* (~30 minutes, at least twice that with verbose logging).
 #
 
 from io import RawIOBase
 import marshal
 from pathlib import Path
+import re
 from typing import Iterator
 
 from loguru import logger
 import pandas as pd
-import re
-import rich.progress
 from rich.console import Console
 from rich.pretty import pprint
+import rich.progress
 from rich.text import Text
 import wikitextparser as wtp
 import zstandard as zstd
@@ -227,7 +227,7 @@ def main() -> None:
 				if page:
 					# pprint(page)
 					pages.append(page)
-					logger.opt(colors=True).info(f"Extracted <green>{page["title"]}</green>")
+					logger.opt(colors=True).info(f"Extracted <green>{page['title']}</green>")
 	logger.info(f"Extracted {len(pages)} pages")
 
 	# Convert to a DataFrame
@@ -241,6 +241,8 @@ def main() -> None:
 	df["quality"] = pd.to_numeric(df["quality"], downcast="unsigned")
 	df["text"] = df["text"].astype("string")
 
+	pprint(df)
+
 	# Store in parquet
 	logger.info("Dumping to disk...")
 	df.to_parquet(RAW_PARQUET_PATH)
@@ -252,6 +254,7 @@ logger.configure(
 	handlers=[
 		{
 			"sink": lambda s: console.print(Text.from_ansi(s)),
+			# TODO: Make the logging level configurable...
 			"level": "ERROR",
 			"colorize": console.is_terminal,
 		}
