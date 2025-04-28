@@ -48,7 +48,7 @@ WS_FR_NAMESPACES = set(
 		"Discussion Transwiki:",
 		"Auteur:",
 		"Discussion Auteur:",
-		# NOTE: We want these ones:
+		# NOTE: We want these:
 		#       they contain the actual data that gets dynamically embedded via Page templates and <pages/> elements...
 		# "Page:",
 		"Discussion Page:",
