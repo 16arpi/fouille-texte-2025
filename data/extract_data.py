@@ -17,6 +17,7 @@ import pandas as pd
 from rich.console import Console
 from rich.pretty import pprint
 import rich.progress
+from rich.progress import track
 from rich.text import Text
 import wikitextparser as wtp
 import zstandard as zstd
@@ -273,8 +274,8 @@ def main() -> None:
 	#       we need to do another pass to restore categories from BOOK_CATEGORIES...
 	#       i.e., We're likely to have seen most of the Page: pages *before*
 	#       we saw the page that embeds them from which we could pull categories...
-	logger.info("Restore categories on Page: pages...")
-	for page in pages:
+	logger.info("Restoring categories on Page: pages...")
+	for page in track(pages, console=console, description="Processing..."):
 		title = page["title"]
 		if not title.startswith("Page:"):
 			continue
