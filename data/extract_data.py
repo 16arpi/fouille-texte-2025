@@ -79,8 +79,8 @@ PAGES_INDEX_RE = re.compile(r"index=\"([^\"]+)\"")
 # NOTE: That's not enough to get rid of most of the ToC pages...
 PAGE_LEN_THRESHOLD = 384
 
-# Pages under the Page: namespace do *not* have categories, so we try to stitch thigs back together...
-BOOK_CATEGORIES = defaultdict(set)
+# Pages under the Page: namespace do *not* have categories, so we try to stitch things back together...
+BOOK_CATEGORIES: dict[str, set[str]] = defaultdict(set)
 
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
