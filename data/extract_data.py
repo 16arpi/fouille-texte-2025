@@ -20,6 +20,9 @@ from rich.text import Text
 import wikitextparser as wtp
 import zstandard as zstd
 
+# Enable CoW in Pandas
+pd.options.mode.copy_on_write = True
+
 BASE_DIR = Path(__file__).parent.resolve()
 PAGE_ARTICLES_PATH = BASE_DIR / "raw" / "frwikisource-current.dicts.zst"
 RAW_PARQUET_PATH = BASE_DIR / "interim" / "frwikisource-current.parquet"

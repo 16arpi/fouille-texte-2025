@@ -28,12 +28,16 @@ mkdir -p "${RAW_DATA_DIR}"
 
 # Date of the dump (c.f., https://dumps.wikimedia.org/frwikisource/)
 DUMP_DATE="20250320"
+# Official wikimedia dumps (throttled)
+#DUMP_URI="https://dumps.wikimedia.org/frwikisource/${DUMP_DATE}/frwikisource-${DUMP_DATE}-pages-meta-current.xml.bz2"
+# Out own mirror
+DUMP_URI="https://tal-m1-fouille.s3.gra.io.cloud.ovh.net/data/external/frwikisource-${DUMP_DATE}-pages-meta-current.xml.bz2"
 
 # Path to the XMLTODICT CLI script
 XMLTODICT=".venv/lib/python3.12/site-packages/xmltodict.py"
 
 # Do everything in one pass, the only thing that should touch local storage is the final step.
-wget "https://dumps.wikimedia.org/frwikisource/${DUMP_DATE}/frwikisource-${DUMP_DATE}-pages-meta-current.xml.bz2" -O - \
+wget "${DUMP_URI}" -O - \
 | bzcat - \
 | python "${XMLTODICT}" 2 \
 | zstd > "${RAW_DATA_DIR}/frwikisource-current.dicts.zst"
