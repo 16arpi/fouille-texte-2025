@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Iterator
 
 import pandas as pd
+import re
 import rich.progress
 from rich.pretty import pprint
 import wikitextparser as wtp
@@ -58,6 +59,9 @@ WS_FR_NAMESPACES = set(
 		"Sujet:",
 	}
 )
+
+PQ_RE = re.compile(r"<pagequality [^>]+/>")
+PQ_LEVEL_RE = re.compile(r"level=\"(\d)\"")
 
 # NOTE: That's not enough to get rid of most of the ToC pages...
 PAGE_LEN_THRESHOLD = 384
@@ -139,8 +143,8 @@ def parse_page(data: dict) -> dict:
 		if len(elts) < 2:
 			continue
 
-		key, value = elts[0], elts[1]
-		if key == "Catégorie" or key == "Catégorie":
+		key, value = elts[0].lower(), elts[1]
+		if key == "catégorie" or key == "category":
 			categories.add(value)
 
 		# Drop the links from the actual text. This is obviously particularly critical for the categories, lol ;).
@@ -160,11 +164,11 @@ def parse_page(data: dict) -> dict:
 	quality = None
 	for template in parsed.templates:
 		# Much like the HTML variant above, skip pages that use a template to dynamically embded single djvu pages...
-		if template.name == "Page":
+		if template.name.lower() == "page":
 			print("Embeds content via the Page template")
 			return None
 
-		if template.name != "TextQuality":
+		if template.name.lower() != "textquality":
 			continue
 
 		value = template.arguments[0].value
@@ -174,6 +178,18 @@ def parse_page(data: dict) -> dict:
 		else:
 			# Strip the %
 			quality = int(value[:-1])
+
+	# Check the pagequality element, too...
+	# NOTE: Possibly only if data["model"] is "proofread-page"?
+	#       (We don't currently save that field in page_extract, though ;)).
+	if not quality:
+		if "<pagequality " in parsed.string:
+			m = PQ_RE.search(parsed.string)
+			if m:
+				m = PQ_LEVEL_RE.search(m.group(0))
+				if m:
+					# Scale is 0 to 4, make it match TextQuality
+					quality = int(group(1)) * 25
 
 	# Skip unknown quality (because it's often disambiguation pages)
 	if not quality:
