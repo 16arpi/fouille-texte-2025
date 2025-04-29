@@ -151,6 +151,7 @@ def parse_livre(parsed: WikiText, book_title: str) -> None:
 
 			logger.opt(colors=True).info(f"Pulled a publication date from <red>{book_title}</red>")
 			BOOK_CATEGORIES[book_title].add(argument.value)
+			return
 
 
 def parse_page(data: dict) -> dict:
