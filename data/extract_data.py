@@ -303,7 +303,7 @@ def main() -> None:
 		}
 	)
 	# This feels stupid... Then again, pd.array doesn't handle sets as input anyway...
-	df["categories"] = df["categories"].apply(lambda x: pd.array(list(x), dtype="string"))
+	# df["categories"] = df["categories"].apply(lambda x: pd.array(list(x), dtype="string"))
 
 	pprint(df)
 
