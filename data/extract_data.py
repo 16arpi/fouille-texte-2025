@@ -305,9 +305,9 @@ def main() -> None:
 	# NOTE: We miiiight actually want to keep everything except quality as native Python objects, we'll see...
 	df = df.astype(
 		{
-			# "title": "string",
+			"title": "string",
 			"quality": np.uint8,  # "category",
-			# "text": "string",
+			"text": "string",
 		}
 	)
 	# This feels stupid... Then again, pd.array doesn't handle sets as input anyway...
