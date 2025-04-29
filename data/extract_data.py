@@ -61,6 +61,7 @@ WS_FR_NAMESPACES = set(
 		"Portail:",
 		"Discussion Portail:",
 		# model is proofread-index
+		# TODO: We miiight want to pull the publication date from there...
 		"Livre:",
 		"Discussion Livre:",
 		"TimedText:",
