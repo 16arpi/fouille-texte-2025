@@ -149,6 +149,7 @@ def parse_livre(parsed: WikiText, book_title: str) -> None:
 			if argument.name != "Annee":
 				continue
 
+			logger.opt(colors=True).info(f"Pulled a publication date from <red>{book_title}</red>")
 			BOOK_CATEGORIES[book_title].add(argument.value)
 
 
