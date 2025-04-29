@@ -62,6 +62,7 @@ WS_FR_NAMESPACES = set(
 		"Discussion Portail:",
 		# model is proofread-index
 		# TODO: We miiight want to pull the publication date from there...
+		#       (Possibly tag it differently (e.g., Pub_$date), in case it conflicts with the existing categories?)
 		"Livre:",
 		"Discussion Livre:",
 		"TimedText:",
