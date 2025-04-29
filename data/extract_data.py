@@ -20,6 +20,7 @@ import rich.progress
 from rich.progress import track
 from rich.text import Text
 import wikitextparser as wtp
+from wikitextparser._wikitext import WikiText
 import zstandard as zstd
 
 # Enable CoW in Pandas
@@ -61,9 +62,9 @@ WS_FR_NAMESPACES = set(
 		"Portail:",
 		"Discussion Portail:",
 		# model is proofread-index
-		# TODO: We miiight want to pull the publication date from there...
+		# NOTE: We also want to pull the publication date from these...
 		#       (Possibly tag it differently (e.g., Pub_$date), in case it conflicts with the existing categories?)
-		"Livre:",
+		# "Livre:",
 		"Discussion Livre:",
 		"TimedText:",
 		"TimedText talk:",
@@ -138,6 +139,19 @@ def page_extract(page: dict) -> dict | None:
 	return data
 
 
+def parse_livre(parsed: WikiText, book_title: str) -> None:
+	for template in parsed.templates:
+		key = template.name.lower()
+		if "proofreadpage_index_template" not in key:
+			continue
+
+		for argument in template.arguments:
+			if argument.name != "Annee":
+				continue
+
+			BOOK_CATEGORIES[book_title] |= argument.value
+
+
 def parse_page(data: dict) -> dict:
 	parsed = wtp.parse(data["text"])
 	title = data["title"]
@@ -170,6 +184,10 @@ def parse_page(data: dict) -> dict:
 
 	# TODO: Do we want to keep stuff that doesn't have a category?
 	#       We obviously can't use it for training, but it cooouuuld maybe be useful during inference?
+
+	# Handle proofread-index pages (to pickup the publication date)
+	if title.startswith("Livre:"):
+		return parse_livre(parsed, title[6:])
 
 	# Skip pages that are dynamically generated from single djvu pages...
 	if "<pages " in parsed.string:
