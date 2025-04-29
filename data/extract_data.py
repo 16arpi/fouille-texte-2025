@@ -149,7 +149,7 @@ def parse_livre(parsed: WikiText, book_title: str) -> None:
 			if argument.name != "Annee":
 				continue
 
-			BOOK_CATEGORIES[book_title] |= argument.value
+			BOOK_CATEGORIES[book_title].add(argument.value)
 
 
 def parse_page(data: dict) -> dict:
