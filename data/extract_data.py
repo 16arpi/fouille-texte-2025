@@ -178,6 +178,10 @@ def parse_page(data: dict) -> dict:
 			m = PAGES_INDEX_RE.search(m.group(0))
 			if m:
 				book_title = m.group(1)
+
+				# Avoid purely numeric titles (this should be much less prone to bogus entries than Page templates)
+				if book_title.isnumeric():
+					book_title = title
 				logger.opt(colors=True).info(f"From <red>{book_title}</red>")
 				BOOK_CATEGORIES[book_title] |= categories
 		return None
@@ -190,6 +194,10 @@ def parse_page(data: dict) -> dict:
 		if key == "page":
 			logger.warning("Embeds content via the Page template")
 			book_title = template.arguments[0].value
+
+			# Avoid purely numeric titles (in particular, there's a bogus {{Page:24}} somewhere...)
+			if book_title.isnumeric():
+				book_title = title
 			logger.opt(colors=True).info(f"From <red>{book_title}</red>")
 			BOOK_CATEGORIES[book_title] |= categories
 			return None
