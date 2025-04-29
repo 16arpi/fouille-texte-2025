@@ -311,6 +311,7 @@ def main() -> None:
 		}
 	)
 	# This feels stupid... Then again, pd.array doesn't handle sets as input anyway...
+	# NOTE: This apparently confuses PyArrow during the parquet dump later :?
 	# df["categories"] = df["categories"].apply(lambda x: pd.array(list(x), dtype="string"))
 
 	pprint(df)
