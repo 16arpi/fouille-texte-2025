@@ -78,6 +78,8 @@ PQ_RE = re.compile(r"<pagequality [^>]+/>")
 PQ_LEVEL_RE = re.compile(r"level=\"(\d)\"")
 PAGES_RE = re.compile(r"<pages [^>]+/>")
 PAGES_INDEX_RE = re.compile(r"index=\"([^\"]+)\"")
+# NOTE: ranges are not uncommon (and can span a few centuries :/), so allow that...
+PUBYEAR_RE = re.compile(r"(\d{4})(-\d{4})?")
 
 # NOTE: That's not enough to get rid of most of the ToC pages...
 PAGE_LEN_THRESHOLD = 384
@@ -146,12 +148,16 @@ def parse_livre(parsed: WikiText, book_title: str) -> None:
 			continue
 
 		for argument in template.arguments:
-			if argument.name != "Annee":
+			# Annee: Année d’édition
+			# Publication: Publication originale
+			if argument.name not in ("Annee", "Publication"):
 				continue
 
-			logger.opt(colors=True).info(f"Pulled a publication date from <red>{book_title}</red>")
-			BOOK_CATEGORIES[book_title].add(argument.value)
-			return
+			# Extract numerical values only...
+			m = PUBYEAR_RE.search(argument.value)
+			if m:
+				logger.opt(colors=True).info(f"Pulled a publication date from <red>{book_title}</red>")
+				BOOK_CATEGORIES[book_title].add(m.group(0))
 
 
 def parse_page(data: dict) -> dict:
@@ -335,6 +341,9 @@ def main() -> None:
 	# This feels stupid... Then again, pd.array doesn't handle sets as input anyway...
 	# NOTE: This apparently confuses PyArrow during the parquet dump later :?
 	# df["categories"] = df["categories"].apply(lambda x: pd.array(list(x), dtype="string"))
+	# NOTE: Sets also happen to be mutable, so unhashable, which is annoying for unique()...
+	#       Consider using a tuple instead:
+	#       df["categories"] = df["categories"].apply(lambda x: tuple(x))
 
 	pprint(df)
 
