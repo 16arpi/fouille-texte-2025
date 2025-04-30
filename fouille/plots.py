@@ -20,6 +20,9 @@ def plot_raw_categories_distribution():
 	unique_cats = lf.select("categories").unique().explode("categories").unique().collect()
 	unique_cats.write_csv(RAW_CATEGORIES)
 
+	# NOTE: It might also be mildloy useful to check for rows with no categories:
+	# lf.filter(pl.col("categories").list.len() == 0).select(pl.all()).collect()
+
 	# Per individual category distribution
 	distrib = lf.select("categories").explode("categories").group_by("categories").len().collect()
 
