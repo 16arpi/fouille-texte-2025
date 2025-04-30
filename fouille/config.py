@@ -21,6 +21,11 @@ MODELS_DIR = PROJ_ROOT / "models"
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 
+# Datasets
+RAW_DATASET = INTERIM_DATA_DIR / "frwikisource-current.parquet"
+RAW_CATEGORIES = INTERIM_DATA_DIR / "raw-cats.csv"
+RAW_CATEGORIES_VIZ = FIGURES_DIR / "raw-cats-distrib.html"
+
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135
 try:

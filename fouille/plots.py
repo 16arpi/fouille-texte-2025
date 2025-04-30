@@ -1,28 +1,48 @@
+#!/usr/bin/env python3
+
 from pathlib import Path
 
 from loguru import logger
-from tqdm import tqdm
+import polars as pl
 import typer
 
-from fouille.config import FIGURES_DIR, PROCESSED_DATA_DIR
+from fouille.config import RAW_DATASET, RAW_CATEGORIES, RAW_CATEGORIES_VIZ, FIGURES_DIR
 
 app = typer.Typer()
 
 
-@app.command()
-def main(
-	# ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-	input_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
-	output_path: Path = FIGURES_DIR / "plot.png",
-	# -----------------------------------------
-):
-	# ---- REPLACE THIS WITH YOUR OWN CODE ----
-	logger.info("Generating plot from data...")
-	for i in tqdm(range(10), total=10):
-		if i == 5:
-			logger.info("Something happened for iteration 5.")
+def plot_raw_categories_distribution():
+	logger.info("Generating categorical distribution plot from raw data...")
+
+	lf = pl.read_parquet(RAW_DATASET).lazy()
+
+	# Unique individual categories
+	unique_cats = lf.select("categories").unique().explode("categories").unique().collect()
+	unique_cats.write_csv(RAW_CATEGORIES)
+
+	# Per individual category distribution
+	distrib = lf.select("categories").explode("categories").group_by("categories").len().collect()
+
+	chart = (
+		distrib.plot.bar(
+			x="categories",
+			y="len",
+			color="categories",
+		)
+		.properties(title="Distribution par catégories brutes")
+		.configure_scale(zero=False)
+		.configure_axisX(tickMinStep=1)
+	)
+	chart.encoding.x.title = "Catégorie"
+	chart.encoding.y.title = "Compte"
+	chart.save(RAW_CATEGORIES_VIZ)
+
 	logger.success("Plot generation complete.")
-	# -----------------------------------------
+
+
+@app.command()
+def main() -> None:
+	plot_raw_categories_distribution()
 
 
 if __name__ == "__main__":
