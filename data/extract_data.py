@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # Initial data extraction pass.
-# NOTE: Beware, this will take *a while* (~30 minutes, at least twice that with verbose logging).
+# NOTE: Beware, this will take *a while* (between 2 and 3 hours, significantly more with verbose logging).
 #
 
 from collections import defaultdict
