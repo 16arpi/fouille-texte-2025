@@ -47,6 +47,7 @@ format:
 sync_data_down:
 	aws s3 sync s3://tal-m1-fouille/data/ \
 		data/
+	chmod +x ./data/*.{py,sh}
 
 ## Upload Data to storage system
 .PHONY: sync_data_up
