@@ -14,7 +14,7 @@ app = typer.Typer()
 def plot_raw_categories_distribution():
 	logger.info("Generating categorical distribution plot from raw data...")
 
-	lf = pl.read_parquet(RAW_DATASET).lazy()
+	lf = pl.scan_parquet(RAW_DATASET)
 
 	# Unique individual categories
 	unique_cats = lf.select("categories").unique().explode("categories").unique().collect()
