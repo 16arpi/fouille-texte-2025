@@ -344,6 +344,9 @@ def main() -> None:
 	# NOTE: Sets also happen to be mutable, so unhashable, which is annoying for unique()...
 	#       Consider using a tuple instead:
 	#       df["categories"] = df["categories"].apply(lambda x: tuple(x))
+	# NOTE: Thankfully, this doesn't matter much, because we switch to Polars for the rest of the project,
+	#       and Polars generally tends towards the One Obvious Way to do stuff
+	#       (in this particular case, it groks this as a List of strrings without jumping through any hoops).
 
 	pprint(df)
 

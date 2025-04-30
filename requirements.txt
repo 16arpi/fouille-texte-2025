@@ -11,7 +11,9 @@ xmltodict
 rich
 zstandard
 pandas
-pandarallel
+polars
+altair
+vegafusion[embed]
 wikitextparser
 evaluate
 -e .
