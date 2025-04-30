@@ -6,7 +6,7 @@ from loguru import logger
 import polars as pl
 import typer
 
-from fouille.config import RAW_DATASET, RAW_CATEGORIES, RAW_CATEGORIES_VIZ, FIGURES_DIR
+from fouille.config import RAW_DATASET, RAW_CATEGORIES, RAW_CATEGORIES_LIST, RAW_CATEGORIES_VIZ, FIGURES_DIR
 
 app = typer.Typer()
 
@@ -19,6 +19,10 @@ def plot_raw_categories_distribution():
 	# Unique individual categories
 	unique_cats = lf.select("categories").unique().explode("categories").unique().collect()
 	unique_cats.write_csv(RAW_CATEGORIES)
+
+	# Unique categories lists
+	unique_cats_list = lf.select("categories").unique().collect()
+	unique_cats_list.write_json(RAW_CATEGORIES_LIST)
 
 	# NOTE: It might also be mildloy useful to check for rows with no categories:
 	# lf.filter(pl.col("categories").list.len() == 0).select(pl.all()).collect()
