@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Download a Wikisource dump, convert each page to a Python dictionary, then marshall and compress the whole thing.
-# Beware: requires ~24GB of RAM.
+# NOTE: Beware: requires ~24GB of RAM.
 #
 
 # Sanity check

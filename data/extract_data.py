@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 #
 # Initial data extraction pass.
-# NOTE: Beware, this will take *a while* (between 2 and 3 hours, significantly more with verbose logging).
+# NOTE: Beware, this will take *a while* (between 2 and 3 hours, significantly more with verbose logging),
+#       and a good chunk of RAM (a tad less than make_dataset.sh, but >16GB nonetheless).
 #
 
 from collections import defaultdict
@@ -342,7 +343,7 @@ def main() -> None:
 	#       df["categories"] = df["categories"].apply(lambda x: tuple(x))
 	# NOTE: Thankfully, this doesn't matter much, because we switch to Polars for the rest of the project,
 	#       and Polars generally tends towards One Obvious Way to do stuff
-	#       (in this particular case, it groks this as a List of strings without jumping through any hoops).
+	#       (in this particular case, it groks our set as a List of strings without jumping through any hoops).
 
 	pprint(df)
 
