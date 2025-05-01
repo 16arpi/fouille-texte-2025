@@ -23,6 +23,9 @@ def plot_raw_categories_distribution():
 	# Unique categories lists
 	unique_cats_list = lf.select("categories").unique().collect()
 	unique_cats_list.write_json(RAW_CATEGORIES_LIST)
+	# Mangle that to make it easier to grep
+	unique_cats_str = lf.select(pl.col("categories").list.join(",")).unique().collect()
+	unique_cats_str.write_csv(RAW_CATEGORIES_LIST.with_suffix(".csv"))
 
 	# NOTE: It might also be mildloy useful to check for rows with no categories:
 	# lf.filter(pl.col("categories").list.len() == 0).select(pl.all()).collect()
