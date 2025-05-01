@@ -27,8 +27,10 @@ def plot_raw_categories_distribution():
 	unique_cats_str = lf.select(pl.col("categories").list.join(",")).unique().collect()
 	unique_cats_str.write_csv(RAW_CATEGORIES_LIST.with_suffix(".csv"))
 
-	# NOTE: It might also be mildloy useful to check for rows with no categories:
+	# NOTE: It might also be mildly useful to check for rows with no categories:
 	# lf.filter(pl.col("categories").list.len() == 0).select(pl.all()).collect()
+	# NOTE: As well as extracting specific rows based on the title, to check a specific Book:
+	# lf.filter(pl.col("title").str.starts_with("Page:Érasme")).select(pl.col(["title", "categories"])).collect()
 
 	# Per individual category distribution
 	distrib = lf.select("categories").explode("categories").group_by("categories").len().collect()
