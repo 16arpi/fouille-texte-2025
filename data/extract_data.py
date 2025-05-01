@@ -129,9 +129,6 @@ def page_extract(page: dict) -> dict | None:
 		logger.warning("Is a redirection")
 		return None
 
-	# TODO: Unify dates
-	# TODO: Try to quantify freqs of cats
-
 	# Pull title & raw text
 	data = {
 		"title": title,
@@ -191,9 +188,6 @@ def parse_page(data: dict) -> dict:
 		text = text.replace(f"{key}:{value}", "")
 		# NOTE: In the same vein, some front-matter or ToC may include dates, that might be a problem for us...
 		# NOTE: So can the title, for that matter...
-
-	# TODO: Do we want to keep stuff that doesn't have a category?
-	#       We obviously can't use it for training, but it cooouuuld maybe be useful during inference?
 
 	# Handle proofread-index pages (to pickup the publication date)
 	if title.startswith("Livre:"):
@@ -347,8 +341,8 @@ def main() -> None:
 	#       Consider using a tuple instead:
 	#       df["categories"] = df["categories"].apply(lambda x: tuple(x))
 	# NOTE: Thankfully, this doesn't matter much, because we switch to Polars for the rest of the project,
-	#       and Polars generally tends towards the One Obvious Way to do stuff
-	#       (in this particular case, it groks this as a List of strrings without jumping through any hoops).
+	#       and Polars generally tends towards One Obvious Way to do stuff
+	#       (in this particular case, it groks this as a List of strings without jumping through any hoops).
 
 	pprint(df)
 
