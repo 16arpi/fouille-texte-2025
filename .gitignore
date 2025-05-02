@@ -187,3 +187,6 @@ cython_debug/
 
 # Third-party code
 wikitextprocessor/
+
+# Awful viz ;p
+reports/figures/raw-cats-distrib.html
