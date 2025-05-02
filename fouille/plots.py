@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
 
 from loguru import logger
 import polars as pl
 import typer
 
-from fouille.config import RAW_DATASET, RAW_CATEGORIES, RAW_CATEGORIES_LIST, RAW_CATEGORIES_VIZ, FIGURES_DIR
+from fouille.config import RAW_CATEGORIES, RAW_CATEGORIES_LIST, RAW_CATEGORIES_VIZ, RAW_DATASET
 
 app = typer.Typer()
 

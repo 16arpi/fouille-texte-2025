@@ -82,7 +82,7 @@ extract_data:
 
 ## Make dataset
 .PHONY: data
-data: requirements
+data:
 	$(PYTHON_INTERPRETER) fouille/dataset.py
 
 

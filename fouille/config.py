@@ -23,6 +23,9 @@ FIGURES_DIR = REPORTS_DIR / "figures"
 
 # Datasets
 RAW_DATASET = INTERIM_DATA_DIR / "frwikisource-current.parquet"
+CLEAN_DATASET = INTERIM_DATA_DIR / "frwikisource-cleaned.parquet"
+
+# Visualizations
 RAW_CATEGORIES = INTERIM_DATA_DIR / "raw-cats.csv"
 RAW_CATEGORIES_LIST = INTERIM_DATA_DIR / "raw-cats-list.json"
 RAW_CATEGORIES_VIZ = FIGURES_DIR / "raw-cats-distrib.html"
