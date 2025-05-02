@@ -17,13 +17,14 @@ def extract_gold_classes():
 
 	lf = pl.scan_parquet(RAW_DATASET)
 
-	lf.select(
-		pl.col("categories")
+	lf = lf.with_columns(pubyear=pl.col("categories")
 		.list.eval(pl.element().str.extract_all(r"(\d{4})")  # Extract *all* dates from each str element in categories (into a List[str] per element)
 			.flatten()  # Flatten the List[List[str]] extract_all created back into a List[str]
 			.cast(pl.UInt16)  # Cast it to a List[UInt16]
-		).list.max()  #  Keep the largest date (i.e., the latest publication date)
-	).collect()
+		).list.max()  #  Keep the most recent date (i.e., the latest publication date)
+	).drop_nulls(subset=["pubyear"])  # Drop rows with no pubyear
+	.select("title", "pubyear", "quality", "text")  # Reorder columns (dropping the original categories column in the process)
+
 
 @app.command()
 def main() -> None:
