@@ -29,6 +29,7 @@ CLEAN_DATASET = INTERIM_DATA_DIR / "frwikisource-cleaned.parquet"
 RAW_CATEGORIES = INTERIM_DATA_DIR / "raw-cats.csv"
 RAW_CATEGORIES_LIST = INTERIM_DATA_DIR / "raw-cats-list.json"
 RAW_CATEGORIES_VIZ = FIGURES_DIR / "raw-cats-distrib.html"
+CLEAN_CATEGORIES_VIZ = FIGURES_DIR / "clean-cats-distrib.html"
 
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135
