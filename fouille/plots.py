@@ -5,7 +5,14 @@ from loguru import logger
 import polars as pl
 import typer
 
-from fouille.config import CLEAN_DATASET, CLEAN_CATEGORIES_VIZ, RAW_CATEGORIES, RAW_CATEGORIES_LIST, RAW_CATEGORIES_VIZ, RAW_DATASET
+from fouille.config import (
+	CLEAN_CATEGORIES_VIZ,
+	CLEAN_DATASET,
+	RAW_CATEGORIES,
+	RAW_CATEGORIES_LIST,
+	RAW_CATEGORIES_VIZ,
+	RAW_DATASET,
+)
 
 app = typer.Typer()
 
@@ -56,13 +63,22 @@ def plot_clean_categories_distribution():
 
 	lf = pl.scan_parquet(CLEAN_DATASET)
 
-	# Per individual category distribution
-	distrib = lf.select("pubyear").group_by("pubyear").len().collect()
+	distrib = (
+		# We don't need any other columns
+		lf.select("pubyear", "text")
+		# Duh'
+		.group_by("pubyear")
+		# Compute the amount of rows per group (i.e., pages)
+		# Then the the amount of characters per group (each group is an aggregate of rows)
+		.agg(pl.len().alias("pages"), pl.col("text").str.len_chars().sum().alias("characters"))
+		.collect()
+	)
 
+	# Pages (i.e., rows) per individual category distribution
 	chart = (
 		distrib.plot.bar(
 			x="pubyear",
-			y="len",
+			y="pages",
 			color="pubyear",
 		)
 		.properties(width=1024, title="Distribution par catégories exactes")
@@ -70,8 +86,23 @@ def plot_clean_categories_distribution():
 		.configure_axisX(tickMinStep=1)
 	)
 	chart.encoding.x.title = "Catégorie"
-	chart.encoding.y.title = "Compte"
+	chart.encoding.y.title = "Pages"
 	chart.save(CLEAN_CATEGORIES_VIZ)
+
+	# Maybe slightly more telling, *characters* per category
+	chart = (
+		distrib.plot.bar(
+			x="pubyear",
+			y="characters",
+			color="pubyear",
+		)
+		.properties(width=1024, title="Distribution par catégories exactes")
+		.configure_scale(zero=False)
+		.configure_axisX(tickMinStep=1)
+	)
+	chart.encoding.x.title = "Catégorie"
+	chart.encoding.y.title = "Signes"
+	chart.save(CLEAN_CATEGORIES_VIZ.with_stem(CLEAN_CATEGORIES_VIZ.stem + "-chars"))
 
 	logger.success("Plot generation complete.")
 
