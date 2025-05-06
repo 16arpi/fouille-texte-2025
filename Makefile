@@ -62,13 +62,18 @@ sync_data_up:
 		s3://tal-m1-fouille/data
 
 
+UNAME_S := $(shell uname -s)
 ## Set up Python interpreter environment
 .PHONY: create_environment
 create_environment:
 	$(PYTHON_INTERPRETER) -m venv --system-site-packages --prompt $(VENV_NAME) .venv
 	@echo ">>> New virtualenv created. Activate with:"
 	@echo "source .venv/bin/activate"
+ifeq ($(UNAME_S),Darwin)
 	@sed -e 's/($(VENV_NAME)) /$(VENV_NAME)/g' -i '' .venv/bin/activate
+else
+	@sed -e 's/($(VENV_NAME)) /$(VENV_NAME)/g' -i .venv/bin/activate
+endif
 
 
 
