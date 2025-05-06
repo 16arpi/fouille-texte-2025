@@ -49,6 +49,12 @@ sync_data_down:
 		data/
 	chmod +x ./data/*.{py,sh}
 
+## Download processed data from storage system
+.PHONY: sync_processed_data_down
+sync_processed_data_down:
+	aws s3 sync s3://tal-m1-fouille/data/processed/ \
+		data/processed/
+
 ## Upload Data to storage system
 .PHONY: sync_data_up
 sync_data_up:
