@@ -62,7 +62,7 @@ create_environment:
 	$(PYTHON_INTERPRETER) -m venv --system-site-packages --prompt $(VENV_NAME) .venv
 	@echo ">>> New virtualenv created. Activate with:"
 	@echo "source .venv/bin/activate"
-	@sed -e 's/($(VENV_NAME)) /$(VENV_NAME)/g' -i .venv/bin/activate
+	@sed -e 's/($(VENV_NAME)) /$(VENV_NAME)/g' -i '' .venv/bin/activate
 
 
 
