@@ -28,6 +28,8 @@ FULL_DATASET = PROCESSED_DATA_DIR / "frwikisource-full.parquet"
 TRAIN_DATASET = PROCESSED_DATA_DIR / "frwikisource-train.parquet"
 TEST_DATASET = PROCESSED_DATA_DIR / "frwikisource-test.parquet"
 DEV_DATASET = PROCESSED_DATA_DIR / "frwikisource-dev.parquet"
+TINY_TEST_DATASET = PROCESSED_DATA_DIR / "frwikisource-test-tiny.parquet"
+TINY_DEV_DATASET = PROCESSED_DATA_DIR / "frwikisource-dev-tiny.parquet"
 
 # Visualizations
 RAW_CATEGORIES = INTERIM_DATA_DIR / "raw-cats.csv"

@@ -6,7 +6,16 @@ import polars as pl
 from polars_splitters import split_into_train_eval
 import typer
 
-from fouille.config import CLEAN_DATASET, RAW_DATASET, FULL_DATASET, TRAIN_DATASET, TEST_DATASET, DEV_DATASET
+from fouille.config import (
+	CLEAN_DATASET,
+	DEV_DATASET,
+	FULL_DATASET,
+	RAW_DATASET,
+	TEST_DATASET,
+	TINY_DEV_DATASET,
+	TINY_TEST_DATASET,
+	TRAIN_DATASET,
+)
 
 app = typer.Typer()
 
@@ -53,14 +62,13 @@ def label_gold_classes():
 
 	lf = pl.scan_parquet(CLEAN_DATASET)
 
-	lf = (
-		lf.with_columns(
-			# Chop things up in 50 years periods
-			# (by rounding pubyear down to the nearest multiple of 50)
-			semicentury=pl.col("pubyear") // 50 * 50
-		)
+	lf = lf.with_columns(
+		# Chop things up in 50 years periods
+		# (by rounding pubyear down to the nearest multiple of 50)
+		semicentury=pl.col("pubyear") // 50 * 50
 	)
 	# NOTE: Confirm groupings w/ lf.group_by("semicentury").agg(pl.all()).collect()
+	#                            lf.group_by("semicentury").count().collect()
 
 	# Dump to disk
 	logger.info("Dumping to disk...")
@@ -103,11 +111,46 @@ def split_dataset():
 	lf_dev.write_parquet(DEV_DATASET)
 
 
+def tiny_splits():
+	logger.info("Tiny splits...")
+
+	# We'll work on 15% of those to keep things practical in terms of computational costs
+	# NOTE: We lose a bunch of categories in the process (and a few are left with *very* few members...)
+	lf = pl.scan_parquet(TEST_DATASET)
+	lf_tiny_test, _ = split_into_train_eval(
+		lf,
+		eval_rel_size=0.85,
+		stratify_by="semicentury",
+		shuffle=True,
+		seed=42,
+		validate=True,
+		as_lazy=False,  # NYI?
+		rel_size_deviation_tolerance=0.1,
+	)
+	lf_tiny_test.write_parquet(TINY_TEST_DATASET)
+	lf_tiny_test.write_csv(TINY_TEST_DATASET.with_suffix(".csv"))
+
+	lf = pl.scan_parquet(DEV_DATASET)
+	lf_tiny_dev, _ = split_into_train_eval(
+		lf,
+		eval_rel_size=0.85,
+		stratify_by="semicentury",
+		shuffle=True,
+		seed=42,
+		validate=True,
+		as_lazy=False,  # NYI?
+		rel_size_deviation_tolerance=0.1,
+	)
+	lf_tiny_dev.write_parquet(TINY_DEV_DATASET)
+	lf_tiny_dev.write_csv(TINY_DEV_DATASET.with_suffix(".csv"))
+
+
 @app.command()
 def main() -> None:
 	extract_gold_classes()
 	label_gold_classes()
 	split_dataset()
+	tiny_splits()
 
 
 if __name__ == "__main__":
