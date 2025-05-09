@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 
 
-from loguru import logger
 import altair as alt
+from loguru import logger
 import polars as pl
 import typer
 
 from fouille.config import (
 	CLEAN_CATEGORIES_VIZ,
 	CLEAN_DATASET,
+	FULL_DATASET,
+	GOLD_CATEGORIES_VIZ,
 	RAW_CATEGORIES,
 	RAW_CATEGORIES_LIST,
 	RAW_CATEGORIES_VIZ,
 	RAW_DATASET,
-	FULL_DATASET,
-	GOLD_CATEGORIES_VIZ,
 )
 
 # Let vegafusion trim the embedded data
 # c.f., https://altair-viz.github.io/user_guide/large_datasets.html
-#alt.data_transformers.enable("vegafusion")
+# alt.data_transformers.enable("vegafusion")
 app = typer.Typer()
 
 
