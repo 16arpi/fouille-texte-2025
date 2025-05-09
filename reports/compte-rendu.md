@@ -77,11 +77,59 @@ On applique aussi une série d'heuristiques pour filtrer les pages "vides" de co
 On utilise aussi [l'indice de qualité](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L235-L245) pour évincer les pages de mauvaise qualité (selon les contributeurs wikisource).
 - Réattribuer les catégories extraites des pages "mères" (sans contenu textuel) aux pages "filles" (sans catégories): on essaye d'abord [pendant l'itération initiale](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L282-L288), en espérant qu'on ait déjà visité la page mère, mais comme cela n'est absolument pas une garantie, on a besoin d'une [deuxième passe](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L327-L344) qui refait une boucle complète sur les pages extraites.
 
-Au même titre que pendant la conversion `xmltodict`, on arrive en fin de chaîne avec une liste de dictionnaires assez conséquente: le script requiert autour de 16GB de RAM. Et au vu du nombre assez massif de pages, la bête prend un temps assez conséquent à faire tourner (~2H30 pour la version finale). Comme il nous reste un peu de traitement à effectuer pour mettre de l'ordre dans les catégories extraites, on va stocker le tout dans une [`DataFrame`](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L346-L373), dans l'espoir que le travail sur un tel objet soit plus efficace. Cette étape utilise [pandas](https://pandas.pydata.org/), parce qu'écrite avant de voir la lumière: la suite passera par [Polars](https://pola.rs/) pour profiter de bien, bien, bien meilleures performances (tant en termes d'espace que de temps), d'une API plus expressive, et de la possibilité de travailler sur des objets sans les mettre entièrement en mémoire. Un plus non négligeable, vu qu'on obtient un tableau de 3.2 *millions* de lignes, qui occupe 2.9GB dans un fichier parquet compressé via zstd...
+Au même titre que pendant la conversion `xmltodict`, on arrive en fin de chaîne avec une liste de dictionnaires assez conséquente: le script requiert autour de 16GB de RAM. Et au vu du nombre assez massif de pages, la bête prend un temps assez conséquent à faire tourner (~2H30 pour la version finale). Comme il nous reste un peu de traitement à effectuer pour mettre de l'ordre dans les catégories extraites, on va stocker le tout dans une [`DataFrame`](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L346-L373), dans l'espoir que le travail sur un tel objet soit plus efficace. Cette étape utilise [pandas](https://pandas.pydata.org/), parce qu'écrite avant de voir la lumière: la suite passera par [Polars](https://pola.rs/) pour profiter de bien, bien, bien meilleures performances (tant en termes d'espace que de temps), d'une API plus expressive, et de la possibilité de travailler sur des objets sans les mettre entièrement en mémoire. Un plus non négligeable, vu qu'on obtient un tableau de 3.228 *millions* de lignes, qui occupe 2.9GB dans un fichier parquet compressé via zstd...
 
-# Méthodologie
+## Nettoyage final & sélection des labels de classification
+
+### Exploration des catégories extraites
+
+Afin d'avoir un peu plus de visibilité sur les catégories extraites, on va (essayer) de [les visualiser](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/plots.py#L26-L70). Au vu de la quantité de données et des différents labels utilisé sur Wikisource, le graphique est *complètement* illisible, donc je vous en fait grâce. Par contre, le listing au format CSV nous permet de mettre en lumière quelques particularités à prendre en compte:
+
+- On devrait pouvoir simplement [extraire tout ce qui ressemble à une date](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L39-L41) sans trop de problème (au vu des données, on peut se limiter à l'intervalle 1000-2999 pour éviter les coquilles tout en gardant notre expression régulière simple)
+- Il existe une série de catégorie "Domaine public en YYYY", qui pourrait fausser nos résultats si l'on se contentait d'extraire les dates de chaque catégorie sans [évincer cette série](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L36-L37)...
+- Comme indiqué plus haut, on peut trouver *plusieurs* dates pour une même page, on veut donc garder la plus récente, afin de gérer les traductions proprement.
+
+Grâce à la magie des `LazyFrame` Polars, on peut donc implémenter cette passe de traitement [entièrement avec des expression Polars](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L23-L61), et la chose tourne en quelques secondes seulement!
+
+Comme on [évince les pages sans dates](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L52-L53), on finit avec un tableau de 3.153 *millions* de lignes.
+
+### Distribution par catégorie
+
+On vient donc à l'étape précédente de rajouter une colonne `pubyear` à notre tableau, qui contient une *seule* valeur par page, on va donc pouvoir visualiser la distribution de nos documents par année de publication, afin de choisir comment l'on veut catégoriser nos données pour l'entraînement du modèle.
+
+Si l'on regarde la distribution des *pages*, on remarque une forte concentration de documents publiés au XIXe & XXe siècle.
+
+[![](figures/clean-cats-distrib.png)](figures/clean-cats-distrib.html)
+
+Afin de s'assurer que cette observation ne soit pas biaisée par des pages avec potentiellement peu de texte, on va aussi visualiser le nombre de *caractères* par catégories
+
+[![](figures/clean-cats-distrib-chars.png)](figures/clean-cats-distrib-chars.html)
+
+À part un gros pic en 1750, la distribution est sensiblement similaire, on peut donc prendre une décision finale. Pour essayer de garder un minimum de séparation à l'intérieur du "paquet" XIX-XXe, tout en essayant de ne pas trop agglutiner les catégories à beaucoup plus faible populations (XV-XVIIe), on va couper un siècle en deux, et se fixer un intervalle de 50 ans.
+
+L'implémentation est [extrêmement triviale](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L73-L77) en Polars (on tronque au multiple de 50 précédant), et l'on abouti aux distributions suivantes:
+
+En nombre de pages par classe:  
+[![](figures/gold-cats-distrib.png)](figures/gold-cats-distrib.html)
+
+Et en nombre de caractères par classe, pour vérifier si la forme correspond:  
+[![](figures/gold-cats-distrib-chars.png)](figures/gold-cats-distrib-chars.html)
+
+On finit avec effectivement une très faible population pour les classes < 1600, ce qui risque de ne pas aller en s'arrangeant une fois que le corpus sera partitionné...
+
+### Partitionnement des données
+
+Afin d'essayer de préserver ces classes minoritaires, on va procéder à un [partitionnement stratifié](https://scikit-learn.org/stable/modules/cross_validation.html#stratification), via le module [polars_splitters](https://github.com/machml/polars_splitters).
+
+On suit le schéma classique [train/dev/test à 80/10/10](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L86-L123), en se permettant une petite entorse: au vu des quantités massives de données, on ne va garder que 15% du dev pour faciliter et accélérer l'itération pendant le développement.
+
+--
+
+Nous voilà arrivé au bout de la chaîne de traitement des données! L'implémentation a été effectuée par Damien; César s'est concentré sur la classification et l'évaluation, que nous allons maintenant aborder.
 
 # Expériences
+
+## Mise en place du dépôt
 
 # Résultats
 
