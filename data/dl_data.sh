@@ -14,11 +14,12 @@ BASE_URL="https://tal-m1-fouille.s3.gra.io.cloud.ovh.net"
 
 DATA_LIST=(
 	"processed/frwikisource-dev-micro.parquet"
-	# Also available: the *full* final corpus (2.2GB) (FULL_DATASET)
+	## Also available:
+	# - The *full* final corpus (2.2GB) (FULL_DATASET)
 	# "processed/frwikisource-full.parquet"
-	# The raw output from `make extract_data` (RAW_DATASET)
+	# - The raw output from `make extract_data` (RAW_DATASET)
 	# "interim/frwikisource-current.parquet"
-	# The output from extract_gold_classes in fouille/dataset.py (`make data`) (CLEAN_DATASET)
+	# - The output from extract_gold_classes in fouille/dataset.py (`make data`) (CLEAN_DATASET)
 	# "interim/frwikisource-cleaned.parquet"
 )
 
