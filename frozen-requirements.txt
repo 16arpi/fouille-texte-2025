@@ -9,14 +9,13 @@ fsspec==2024.12.0
 ghp-import==2.1.0
 jsonschema==4.23.0
 jsonschema-specifications==2025.4.1
-loguru==0.7.2
 mergedeep==1.3.4
 mkdocs==1.6.1
 mkdocs-get-deps==0.2.0
 multiprocess==0.70.16
-narwhals==1.38.0
-polars==1.1.0
-polars-splitters==0.2.2
+narwhals==1.38.2
+polars==1.29.0
+polars-splitters==0.3.4
 pyasn1==0.6.1
 pyyaml_env_tag==0.1
 referencing==0.36.2
@@ -26,6 +25,7 @@ ruff==0.11.8
 s3transfer==0.10.4
 typer==0.15.3
 vegafusion==2.0.2
+vl-convert-python==1.7.0
 watchdog==6.0.0
 wikitextparser==0.56.3
 xmltodict==0.14.2
@@ -34,3 +34,5 @@ rich==14.0.0
 zstandard==0.23.0
 pandas==2.2.3
 evaluate==0.4.3
+loguru==0.7.3
+python-dotenv==1.1.0
