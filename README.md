@@ -20,9 +20,7 @@ End of term project, text classification by date.
 │   ├── make_dataset.sh <- Initial data ingest pipeline.
 │   └── extract_data.py <- Main data wrangling logic.
 │
-├── docs                <- A default mkdocs project; see www.mkdocs.org for details
-│
-├── pyproject.toml      <- Project configuration file with package metadata for 
+├── pyproject.toml      <- Project configuration file with package metadata for
 │                          fouille and configuration for tools like black
 │
 ├── references          <- Data dictionaries, manuals, and all other explanatory materials.
