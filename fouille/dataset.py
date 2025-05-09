@@ -21,6 +21,10 @@ app = typer.Typer()
 
 
 def extract_gold_classes() -> None:
+	"""
+	Pull the most recent publication year from each page's categories
+	"""
+
 	logger.info("Extracting exact gold classes from raw data...")
 
 	lf = pl.scan_parquet(RAW_DATASET)
@@ -58,6 +62,10 @@ def extract_gold_classes() -> None:
 
 
 def label_gold_classes() -> None:
+	"""
+	Label publication years in intervals of 50 years
+	"""
+
 	logger.info("Labelling clean data w/ gold classes...")
 
 	lf = pl.scan_parquet(CLEAN_DATASET)
@@ -76,6 +84,10 @@ def label_gold_classes() -> None:
 
 
 def split_dataset() -> None:
+	"""
+	Do an 80/10/10 train/test/dev stratified split (i.e., preserving class distribution)
+	"""
+
 	logger.info("Stratified split on gold class...")
 
 	lf = pl.scan_parquet(FULL_DATASET)
@@ -112,6 +124,10 @@ def split_dataset() -> None:
 
 
 def tiny_splits() -> None:
+	"""
+	Split dev & test into even smaller chunks to help iterating more quickly on the classification
+	"""
+
 	logger.info("Tiny splits...")
 
 	# We'll work on 15% of those to keep things practical in terms of computational costs

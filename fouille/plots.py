@@ -24,6 +24,12 @@ app = typer.Typer()
 
 
 def plot_raw_categories_distribution() -> None:
+	"""
+	Raw category distribution plot.
+	The plot itself is extremely unreadable,
+	so we also dump a more actionable list of categories in CSV
+	"""
+
 	logger.info("Generating categorical distribution plot from raw data...")
 
 	lf = pl.scan_parquet(RAW_DATASET)
@@ -65,6 +71,10 @@ def plot_raw_categories_distribution() -> None:
 
 
 def plot_clean_categories_distribution() -> None:
+	"""
+	Publication year distribution plot
+	"""
+
 	logger.info("Generating categorical distribution plot from clean data...")
 
 	lf = pl.scan_parquet(CLEAN_DATASET)
@@ -114,6 +124,10 @@ def plot_clean_categories_distribution() -> None:
 
 
 def plot_gold_categories_distribution() -> None:
+	"""
+	Class distribution plot (i.e., publication year, in 50 year intervals)
+	"""
+
 	logger.info("Generating categorical distribution plot from final data...")
 
 	lf = pl.scan_parquet(FULL_DATASET)

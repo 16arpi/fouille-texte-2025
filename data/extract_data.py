@@ -90,6 +90,10 @@ BOOK_CATEGORIES: dict[str, set[str]] = defaultdict(set)
 
 
 def page_gen(f: RawIOBase) -> Iterator[dict]:
+	"""
+	Unmarshal page dictionaries, one by one (generator)
+	"""
+
 	try:
 		while True:
 			_, page = marshal.load(f)
@@ -99,6 +103,11 @@ def page_gen(f: RawIOBase) -> Iterator[dict]:
 
 
 def page_extract(page: dict) -> dict | None:
+	"""
+	Extract relevant fields from a given page.
+	Returns None if the page is not relevant.
+	"""
+
 	# pprint(page)
 
 	if "title" not in page:
@@ -140,6 +149,10 @@ def page_extract(page: dict) -> dict | None:
 
 
 def parse_livre(parsed: WikiText, book_title: str) -> None:
+	"""
+	Extract publication year info from a Livre: page
+	"""
+
 	for template in parsed.templates:
 		key = template.name.lower()
 		if "proofreadpage_index_template" not in key:
@@ -159,6 +172,10 @@ def parse_livre(parsed: WikiText, book_title: str) -> None:
 
 
 def parse_page(data: dict) -> dict:
+	"""
+	Main data wrangling logic for relevant pages
+	"""
+
 	parsed = wtp.parse(data["text"])
 	title = data["title"]
 
@@ -284,6 +301,10 @@ def parse_page(data: dict) -> dict:
 
 
 def main() -> None:
+	"""
+	Main CLI entry-point
+	"""
+
 	pages = []
 	with rich.progress.open(PAGE_ARTICLES_PATH, "rb", console=console) as fh:
 		dctx = zstd.ZstdDecompressor()
