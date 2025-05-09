@@ -165,7 +165,7 @@ Chaque étape créé une copie des données, donc on arrive assez facilement à 
 
 # Préparation des données vectorielles
 
-Une fois les documents téléchargés, une étape de vectorisation précède le déroulement des expériences. À cette étape, il s'agit de traduire les documents en vecteurs. Dans notre cas, nous avons opté pour un représentation vectorielle par sac de mot : chaque dimension correspondant à un mot du vocabulaire totale et chaque valeur d'une dimension, la fréquence du mot dans le document. Pour cela, deux choix s'imposent : comment déterminer ce qu'est un mot ? comment construire ces vecteurs ?
+Une fois les documents téléchargés, une étape de vectorisation précède le déroulement des expériences. À cette étape, il s'agit de traduire les documents en vecteurs. Dans notre cas, nous avons opté pour un représentation vectorielle par sac de mot : chaque dimension correspondant à un mot du vocabulaire total et chaque valeur d'une dimension, la fréquence du mot dans le document. Pour cela, deux choix s'imposent : comment déterminer ce qu'est un mot ? comment construire ces vecteurs ?
 
 ## Tokenisation
 
