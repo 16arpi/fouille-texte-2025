@@ -22,10 +22,10 @@ Un autre intérêt de Wikisource est l'aspect légal non-ambigu: tout le contenu
 
 ## Exploitation du dump wikisource
 
-Nous voilà donc parti pour exploiter le *dump* du [20 mars 2025](https://dumps.wikimedia.org/frwikisource/20250320/) de Wikisource FR (spécifiquement, le fichier *frwikisource-20250320-pages-meta-current.xml.bz2*).  
+Nous voilà donc parti pour exploiter le *dump* du [20 mars 2025](https://dumps.wikimedia.org/frwikisource/20250320/) de Wikisource FR (spécifiquement, le fichier *frwikisource-20250320-pages-meta-current.xml.bz2*).
 Ces fichiers sont donc au format XML (selon un schéma [bien défini](https://meta.wikimedia.org/wiki/Data_dumps/Dump_format)) et compressé en BZ2. Au hasard des recherches sur les outils disponibles pour traiter ces fichiers, nous tombons sur le projet [xmltodict](https://github.com/martinblech/xmltodict): un module Python qui convertit une arborescence XML en objets natifs Python. La présentation du projet fait ressortir deux points importants pour notre utilisation: l'utilisation d'un parser XML de type SAX, donc qui ne va pas avoir besoin de charger l'intégralité du fichier en mémoire (un point relativement important vu la taille du dump: 2.3GB *compressé*); et le fait qu'il ait visiblement été testé sur des dumps Wikimedia.
 
-Séduits par l'idée de pouvoir travailler sur des objets Python natifs et de faire outre du XML, on implémente cette passe de conversion [via un simple pipeline shell](https://github.com/16arpi/fouille-texte-2025/blob/348b7b87b2017e96a2190ef58de05eaa2b94f803/data/make_dataset.sh#L39-L43), et l'on stocke le résultat dans un fichier compressé par [zstandard](https://github.com/facebook/zstd), pour ses performances idéales (compression très correcte, et *excellentes* performances en décompression).  
+Séduits par l'idée de pouvoir travailler sur des objets Python natifs et de faire outre du XML, on implémente cette passe de conversion [via un simple pipeline shell](https://github.com/16arpi/fouille-texte-2025/blob/348b7b87b2017e96a2190ef58de05eaa2b94f803/data/make_dataset.sh#L39-L43), et l'on stocke le résultat dans un fichier compressé par [zstandard](https://github.com/facebook/zstd), pour ses performances idéales (compression très correcte, et *excellentes* performances en décompression).
 Et c'est là que l'on va pour la première fois se confronter au challenge de gérer une telle quantité de données: alors que la partie parser XML travaille en *streaming*, la représentation en objets Python, elle, beaucoup moins, puisque les données s'accumulent petit à petit... Bref, on se retrouve en fin de traitement avec un joli pic d'occupation mémoire à 24GB!
 
 ## Exploration & Extraction des données
@@ -34,8 +34,8 @@ En sortie de notre pipeline `xmltodict`, on se retrouve donc avec des objets Pyt
 
 On implémente donc une [boucle de lecture du flux compressé](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L309-L313) (avec une jolie barre de progression pour prendre notre mal en patience), couplé à un [générateur](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L92-L102) pour décoder l'objet.
 
-On commence par étudier les structures de données en affichant le contenu de quelques pages via [rich.pretty.pprint](https://rich.readthedocs.io/en/stable/pretty.html) pour identifier les champs qui nous intéressent (i.e., le titre et le contenu textuel), et on vérifie la cohérence des résultats en allant explorer la version XML du dump. On isole assez facilement tout ça (c.f., [la fonction `page_extract`](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L105-L148)), mais on se rend compte assez rapidement que tout le reste des informations va se trouver dans le texte brut, qui est dans un format bien spécifique, [Wikitext](https://en.wikipedia.org/wiki/Help:Wikitext), augmenté de [conventions spécifiques à Wikisource](https://en.wikisource.org/wiki/Wikisource:Style_guide).  
-Et c'est là que le deuxième effet kiss-cool de l'utilisation des dumps au lieu du contenu des pages HTML générées se fait sentir: en fait, une écrasante majorité des pages contient du contenu généré dynamiquement (via un système de *templates* assez complexe), en particulier, les pages qui contiennent les informations de catégorisation, et qui sont celles indexées et vouées à être consultées, sont quasiment *toutes* générés dynamiquement, et ne contiennent donc que le *markup* de catégorisation, et le *markup* de magie noire qui va chercher le contenu textuel ailleurs... Cet "ailleurs" se trouve en fait être des pages sous le préfixe/espace de nommage `Livre:`, qui se base sur *un* facsimilé spécifique, et comporte les informations de publication de *ce* facsimilé (informations potentiellement différentes des pages qui l'incluent, nous y reviendrons plus tard), et qui, à son tour, contient la liste de *chaque* page de cet ouvrage, sous le préfixe *Page:*, qui sont, enfin, les pages qui contiennent le contenu textuel... mais qui, malheureusement, ne contiennent *plus aucune* information de classification!  
+On commence par étudier les structures de données en affichant le contenu de quelques pages via [rich.pretty.pprint](https://rich.readthedocs.io/en/stable/pretty.html) pour identifier les champs qui nous intéressent (i.e., le titre et le contenu textuel), et on vérifie la cohérence des résultats en allant explorer la version XML du dump. On isole assez facilement tout ça (c.f., [la fonction `page_extract`](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L105-L148)), mais on se rend compte assez rapidement que tout le reste des informations va se trouver dans le texte brut, qui est dans un format bien spécifique, [Wikitext](https://en.wikipedia.org/wiki/Help:Wikitext), augmenté de [conventions spécifiques à Wikisource](https://en.wikisource.org/wiki/Wikisource:Style_guide).
+Et c'est là que le deuxième effet kiss-cool de l'utilisation des dumps au lieu du contenu des pages HTML générées se fait sentir: en fait, une écrasante majorité des pages contient du contenu généré dynamiquement (via un système de *templates* assez complexe), en particulier, les pages qui contiennent les informations de catégorisation, et qui sont celles indexées et vouées à être consultées, sont quasiment *toutes* générés dynamiquement, et ne contiennent donc que le *markup* de catégorisation, et le *markup* de magie noire qui va chercher le contenu textuel ailleurs... Cet "ailleurs" se trouve en fait être des pages sous le préfixe/espace de nommage `Livre:`, qui se base sur *un* facsimilé spécifique, et comporte les informations de publication de *ce* facsimilé (informations potentiellement différentes des pages qui l'incluent, nous y reviendrons plus tard), et qui, à son tour, contient la liste de *chaque* page de cet ouvrage, sous le préfixe *Page:*, qui sont, enfin, les pages qui contiennent le contenu textuel... mais qui, malheureusement, ne contiennent *plus aucune* information de classification!
 On se retrouve donc avec plusieurs problèmes purement techniques à gérer pour démêler tout ça:
 
 - On va avoir besoin de pouvoir exploiter le *markup* Wikitext pour pouvoir en extraire le texte brut, les informations de catégorisation, et les *templates* qui gèrent le système de génération dynamique décrit à l'instant.
@@ -62,7 +62,7 @@ Pour visualiser le problème, on peut regarder par exemple la page pour l'une de
 
 Il faut donc suivre cette balise *pages*, qui nous mène à la page [*Livre:* du même nom que l'attribut `index` de cette balise](https://fr.wikisource.org/wiki/Livre:%C3%89rasme_-_%C3%89loge_de_la_folie,_trad_de_Nolhac,_1964.djvu).
 
-Cette page est elle aussi entièrement générée grâce à du *markup* magique, et, en plus de pointer vers les différentes pages de l'ouvrage (pages sous le préfixe *Page:*, qui, elles, vont *vraiment* contenir du texte), elle contient aussi jusqu'à deux dates importantes pour notre projet: l'année d'édition et de publication originale.  
+Cette page est elle aussi entièrement générée grâce à du *markup* magique, et, en plus de pointer vers les différentes pages de l'ouvrage (pages sous le préfixe *Page:*, qui, elles, vont *vraiment* contenir du texte), elle contient aussi jusqu'à deux dates importantes pour notre projet: l'année d'édition et de publication originale.
 La distinction est importante, car on va trouver *beaucoup* de traductions sur wikisource, et par exemple, ici, alors que la page "principale" est classée au XVIe siècle (date de parution de la version *originale*), le texte que l'on va extraire date de 1964! On ne voudrait donc pas classer ce texte à une autre date que cette dernière. De ce fait, on appliquera en fin de chaîne une heuristique très simple qui ne garde que la date la plus récente, date qui devrait correspondre à la publication dont le texte à vraiment été extrait.
 
 Et pour boucler la boucle, comme on le disait plus haut, si l'on regarde [une des pages](https://fr.wikisource.org/wiki/Page:%C3%89rasme_-_%C3%89loge_de_la_folie,_trad_de_Nolhac,_1964.djvu/46) de cet ouvrage, on arrive enfin sur du contenu textuel, mais sans aucune information de catégorisation.
@@ -70,13 +70,13 @@ Et pour boucler la boucle, comme on le disait plus haut, si l'on regarde [une de
 Bref, on a donc besoin de:
 
 - Gérer les pages *Livre:* [pour en extraire les dates de publication](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L151-L171)
-- Gérer les autres pages intéressantes (par exemple, [on saute la plupart des *namespaces*](https://github.com/16arpi/fouille-texte-2025/blob/832ed71dc3fd7b371337d94985cd98bf9ded38a8/data/extract_data.py#L34-L76) pour ne garder que le contenu pertinent) [pour extraire les information de catégorisation](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L174-L300).  
-C'est aussi à cette étape que l'on extrait le texte brut en éliminant le markup (wikitextparser propose une méthode `plain_text()` qui fait le plus gros de la tâche, mais on a quand même besoin de supprimer les informations de catégorisation, puisqu'elles incluent la date que l'on cherchera à prédire. En pratique, comme on vient de le montrer, les pages avec infos de catégorisation ne contiennent *pas* de "vrai" contenu textuel, donc c'est moins problématique que les commentaires initiaux qui persistent dans le code peuvent le laisser entendre).  
-On applique aussi une série d'heuristiques pour filtrer les pages "vides" de contenu, soit simplement quand elles ne contiennent que [peu de caractères](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L86), soit parce qu'elles sont [générées](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L214-L229) [dynamiquement](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L235-L245) (évidemment, il y a deux types de markups différents pour implémenter la chose...).  
+- Gérer les autres pages intéressantes (par exemple, [on saute la plupart des *namespaces*](https://github.com/16arpi/fouille-texte-2025/blob/832ed71dc3fd7b371337d94985cd98bf9ded38a8/data/extract_data.py#L34-L76) pour ne garder que le contenu pertinent) [pour extraire les information de catégorisation](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L174-L300).
+C'est aussi à cette étape que l'on extrait le texte brut en éliminant le markup (wikitextparser propose une méthode `plain_text()` qui fait le plus gros de la tâche, mais on a quand même besoin de supprimer les informations de catégorisation, puisqu'elles incluent la date que l'on cherchera à prédire. En pratique, comme on vient de le montrer, les pages avec infos de catégorisation ne contiennent *pas* de "vrai" contenu textuel, donc c'est moins problématique que les commentaires initiaux qui persistent dans le code peuvent le laisser entendre).
+On applique aussi une série d'heuristiques pour filtrer les pages "vides" de contenu, soit simplement quand elles ne contiennent que [peu de caractères](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L86), soit parce qu'elles sont [générées](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L214-L229) [dynamiquement](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L235-L245) (évidemment, il y a deux types de markups différents pour implémenter la chose...).
 On utilise aussi [l'indice de qualité](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L235-L245) pour évincer les pages de mauvaise qualité (selon les contributeurs wikisource).
 - Réattribuer les catégories extraites des pages "mères" (sans contenu textuel) aux pages "filles" (sans catégories): on essaye d'abord [pendant l'itération initiale](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L282-L288), en espérant qu'on ait déjà visité la page mère, mais comme cela n'est absolument pas une garantie, on a besoin d'une [deuxième passe](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L327-L344) qui refait une boucle complète sur les pages extraites.
 
-Au même titre que pendant la conversion `xmltodict`, on arrive en fin de chaîne avec une liste de dictionnaires assez conséquente: le script requiert autour de 16GB de RAM. Et au vu du nombre assez massif de pages, la bête prend un temps assez conséquent à faire tourner (~2H30 pour la version finale). Comme il nous reste un peu de traitement à effectuer pour mettre de l'ordre dans les catégories extraites, on va stocker le tout dans une [`DataFrame`](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L346-L373), dans l'espoir que le travail sur un tel objet soit plus efficace. Cette étape utilise [pandas](https://pandas.pydata.org/), parce qu'écrite avant de voir la lumière: la suite passera par [Polars](https://pola.rs/) pour profiter de bien, bien, bien meilleures performances (tant en termes d'espace que de temps), d'une API plus expressive, et de la possibilité de travailler sur des objets sans les mettre entièrement en mémoire. Un plus non négligeable, vu qu'on obtient un tableau de 3.228 *millions* de lignes, qui occupe 2.9GB dans un fichier parquet compressé via zstd...  
+Au même titre que pendant la conversion `xmltodict`, on arrive en fin de chaîne avec une liste de dictionnaires assez conséquente: le script requiert autour de 16GB de RAM. Et au vu du nombre assez massif de pages, la bête prend un temps assez conséquent à faire tourner (~2H30 pour la version finale). Comme il nous reste un peu de traitement à effectuer pour mettre de l'ordre dans les catégories extraites, on va stocker le tout dans une [`DataFrame`](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L346-L373), dans l'espoir que le travail sur un tel objet soit plus efficace. Cette étape utilise [pandas](https://pandas.pydata.org/), parce qu'écrite avant de voir la lumière: la suite passera par [Polars](https://pola.rs/) pour profiter de bien, bien, bien meilleures performances (tant en termes d'espace que de temps), d'une API plus expressive, et de la possibilité de travailler sur des objets sans les mettre entièrement en mémoire. Un plus non négligeable, vu qu'on obtient un tableau de 3.228 *millions* de lignes, qui occupe 2.9GB dans un fichier parquet compressé via zstd...
 Le nombre de lignes (i.e., de documents) explose par rapport au nombre d'*ouvrages* disponibles sur Wikisource, du fait que les pages ayant un vrai contenu textuel que l'on garde correspondent en fait à chaque fois à *une* page de l'ouvrage physique... On se retrouve donc avec potentiellement des centaines de lignes dans le tableau pour un seul ouvrage.
 
 ## Nettoyage final & sélection des labels de classification
@@ -109,10 +109,10 @@ Afin de s'assurer que cette observation ne soit pas biaisée par des pages avec 
 
 L'implémentation est [extrêmement triviale](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L73-L77) en Polars (on tronque au multiple de 50 précédant), et l'on abouti aux distributions suivantes:
 
-En nombre de pages par classe:  
+En nombre de pages par classe:
 [![](figures/gold-cats-distrib.png)](figures/gold-cats-distrib.html)
 
-Et en nombre de caractères par classe, pour vérifier si la forme correspond:  
+Et en nombre de caractères par classe, pour vérifier si la forme correspond:
 [![](figures/gold-cats-distrib-chars.png)](figures/gold-cats-distrib-chars.html)
 
 On finit avec effectivement une très faible population pour les classes < 1600, ce qui risque de ne pas aller en s'arrangeant une fois que le corpus sera partitionné...
@@ -163,9 +163,141 @@ Chaque étape créé une copie des données, donc on arrive assez facilement à 
 
 (Je travaille sur un tmpfs pour évacuer tout problème de performances I/O, mais forcément ça implique potentiellement encore plus de contraintes sur la pression mémoire, donc YMMV sur une machine avec < 48GB de RAM).
 
+# Préparation des données vectorielles
+
+Une fois les documents téléchargés, une étape de vectorisation précède le déroulement des expériences. À cette étape, il s'agit de traduire les documents en vecteurs. Dans notre cas, nous avons opté pour un représentation vectorielle par sac de mot : chaque dimension correspondant à un mot du vocabulaire totale et chaque valeur d'une dimension, la fréquence du mot dans le document. Pour cela, deux choix s'imposent : comment déterminer ce qu'est un mot ? comment construire ces vecteurs ?
+
+## Tokenisation
+
+Notre corpus s'étalant sur plusieurs siècles, nous devions prévoir une tokenisaton qui prend en compte les évolutions morphologiques du français. Ce besoin nous obligeait à trouver un équilibre entre une tokenisation fine, à l'échelle du terme comme du sous-terme, mais aussi rapide et facilement implémentable. Nous avons finalement opté pour une tokenisation par Byte Pair Encoding : cet algorithme, beaucoup utilisé pour tokeniser les corpus des LLM, permet de tokeniser rapidement les textes à hauteur des groupes de caractères les plus fréquents.
+
+## Représentations vectorielles
+
+La tokenisation faite, il fallait ensuite construire pour chaque document une représentation vectorielle en sac de mot. Pour cela, nous sommes passé par la classe `CountVectorizer` de SciKit-Learn. Celle-ci permet une vectorisation rapide des textes, tout en acceptant notre méthode de tokenisation. De plus, parce que notre corpus est très volumineux, nous avons fait le choix de nous débarasser des tokens dont la fréquence parmi les documents est inférieure à 5% : sans cette règle, nous aurions eu un nombre de dimensions bien trop important.
+
+## Division en corpus d'entraînement et d'évaluation
+
+Nos vecteurs en poche, la dernière étape de préparation de nos donées a été de diviser notre corpus en 4 sous-corpus :
+- Un ensemble de vecteurs d'entraînement
+- Leur classe respective
+- Un ensemble de vecteurs d'évaluation
+- Leur classe respective
+
+La partition choisie est de 80%/20%. Cette étape a été possible grâce à la méthode `train_test_split()` de Sci-Kit Learn.
+
 # Expériences
+
+Les expériences ont consistés à tester quatre méthodes de classification supervisée, toutes proposées par SciKit-Learn :
+
+- Un _arbre de décision (DecisionTree)_. Le choix des disciminants se fait par l'indice de Gini.
+- Un _Support Vector Machine (SVC)_. Dans notre cas, le SVM utile un kernel RBF (Radial Basis Function).
+- Un _Naive Bayes multinominal (MultinomialNB)_. Cette variante de Naive Bayes est adapté à une classification multiple.
+- Un _Multi Layer Perceptron (MLP)_. Notre instance utilise deux couches intermédiaires de 100 poids, Adam comme méthode de descente du gradient et ReLU comme fonction d'activation.
+
+Tout d'abord, nos modèles ont été entraînés sur notre ensemble d'entraînement. Par la suite, chaque modèle a essayé de prédire la classe de l'ensemble d'évaluation. Les prédictions et les classes réelles ont été confrontées à l'aide de différentes métriques d'évaluation présentées ci-dessous.
 
 # Résultats
 
+Pour évaluer nos modèles, nous avons calculé pour chacun d'eux une matrice de confusion et calculé les mesures de justesse (accuracy), précision, rappel, ainsi que les micro et macro moyennes.
+
+## Matrices de confusion
+
+| |1450|1500|1550|1600|1650|1700|1750|1800|1850|1900|1950|2000|
+|------|----|----|----|----|----|----|----|----|----|----|----|----|
+|1450  |0   |0   |0   |0   |0   |0   |0   |1   |0   |0   |0   |0   |
+|1500  |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |
+|1550  |0   |0   |0   |0   |0   |0   |0   |0   |0   |2   |0   |0   |
+|1600  |0   |0   |1   |2   |2   |0   |3   |1   |2   |0   |0   |0   |
+|1650  |0   |1   |3   |0   |8   |2   |1   |0   |1   |0   |0   |0   |
+|1700  |0   |0   |0   |0   |1   |4   |7   |0   |0   |3   |0   |0   |
+|1750  |0   |0   |0   |2   |2   |11  |54  |10  |11  |5   |0   |0   |
+|1800  |0   |0   |0   |0   |1   |1   |8   |72  |134 |78  |3   |1   |
+|1850  |0   |1   |2   |1   |2   |2   |13  |128 |463 |272 |15  |2   |
+|1900  |0   |0   |1   |1   |3   |4   |2   |63  |273 |263 |3   |3   |
+|1950  |0   |0   |0   |0   |0   |0   |0   |6   |16  |13  |1   |0   |
+|2000  |0   |0   |0   |0   |0   |0   |0   |1   |5   |3   |0   |0   |
+
+_Arbre de décision_
+
+| |1450|1500|1550|1600|1650|1700|1750|1800|1850|1900|1950|2000|
+|------|----|----|----|----|----|----|----|----|----|----|----|----|
+|1450  |0   |0   |0   |0   |0   |0   |0   |0   |1   |0   |0   |0   |
+|1500  |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |
+|1550  |0   |0   |0   |0   |0   |0   |0   |0   |2   |0   |0   |0   |
+|1600  |0   |0   |0   |0   |0   |0   |4   |0   |7   |0   |0   |0   |
+|1650  |0   |0   |0   |0   |0   |0   |7   |0   |8   |1   |0   |0   |
+|1700  |0   |0   |0   |0   |0   |0   |6   |0   |9   |0   |0   |0   |
+|1750  |0   |0   |0   |0   |0   |0   |53  |0   |41  |1   |0   |0   |
+|1800  |0   |0   |0   |0   |0   |0   |0   |8   |285 |5   |0   |0   |
+|1850  |0   |0   |0   |0   |0   |0   |6   |0   |841 |54  |0   |0   |
+|1900  |0   |0   |0   |0   |0   |0   |0   |1   |485 |130 |0   |0   |
+|1950  |0   |0   |0   |0   |0   |0   |0   |0   |24  |12  |0   |0   |
+|2000  |0   |0   |0   |0   |0   |0   |0   |0   |7   |2   |0   |0   |
+
+_Support Vector Machine_
+
+| |1450|1500|1550|1600|1650|1700|1750|1800|1850|1900|1950|2000|
+|------|----|----|----|----|----|----|----|----|----|----|----|----|
+|1450  |0   |0   |0   |0   |0   |0   |1   |0   |0   |0   |0   |0   |
+|1500  |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |
+|1550  |0   |0   |0   |1   |0   |0   |0   |0   |1   |0   |0   |0   |
+|1600  |0   |0   |4   |2   |3   |2   |0   |0   |0   |0   |0   |0   |
+|1650  |0   |0   |1   |1   |10  |2   |1   |1   |0   |0   |0   |0   |
+|1700  |0   |0   |1   |0   |2   |5   |6   |0   |1   |0   |0   |0   |
+|1750  |0   |0   |1   |0   |4   |14  |60  |10  |6   |0   |0   |0   |
+|1800  |0   |1   |1   |0   |0   |5   |10  |138 |95  |17  |29  |2   |
+|1850  |0   |0   |5   |4   |0   |10  |8   |193 |460 |115 |97  |9   |
+|1900  |0   |0   |5   |1   |1   |2   |7   |82  |257 |162 |89  |10  |
+|1950  |0   |0   |0   |0   |0   |0   |0   |6   |10  |12  |8   |0   |
+|2000  |0   |0   |0   |0   |0   |0   |0   |1   |3   |3   |1   |1   |
+
+_Naive Bayes_
+
+| |1450|1500|1550|1600|1650|1700|1750|1800|1850|1900|1950|2000|
+|------|----|----|----|----|----|----|----|----|----|----|----|----|
+|1450  |0   |0   |0   |0   |0   |0   |0   |0   |1   |0   |0   |0   |
+|1500  |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |
+|1550  |0   |0   |0   |0   |0   |0   |0   |0   |1   |1   |0   |0   |
+|1600  |0   |0   |0   |3   |2   |0   |1   |1   |3   |0   |1   |0   |
+|1650  |0   |0   |1   |0   |6   |2   |1   |0   |5   |1   |0   |0   |
+|1700  |0   |0   |0   |0   |0   |2   |10  |1   |2   |0   |0   |0   |
+|1750  |0   |0   |0   |0   |1   |3   |67  |6   |11  |7   |0   |0   |
+|1800  |0   |0   |0   |0   |0   |2   |8   |106 |126 |54  |2   |0   |
+|1850  |0   |0   |1   |2   |2   |1   |13  |88  |542 |248 |3   |1   |
+|1900  |0   |0   |0   |1   |1   |0   |0   |43  |268 |298 |5   |0   |
+|1950  |0   |0   |0   |0   |0   |0   |0   |2   |14  |20  |0   |0   |
+|2000  |0   |0   |0   |0   |0   |0   |0   |2   |2   |5   |0   |0   |
 
 
+_Multi Layer Perceptron_
+
+## _Accuracy_, micro/macro-moyennes de precision et de rappel
+
+| |Decision Tree|SVM|Naive Bayes|Perceptron|
+|------|-------------|---|-----------|----------|
+|Accuracy|0.43         |0.52|0.42       |0.51      |
+|Micro-moyenne Précision|0.43         |0.58|0.50       |0.50      |
+|Macro-moyenne Précision|0.23         |0.25|0.25       |0.30      |
+|Micro-moyenne Rappel|0.43         |0.52|0.42       |0.51      |
+|Macro-moyenne Rappel|0.23         |0.16|0.28       |0.27      |
+|Micro-moyenne F1|0.43         |0.42|0.44       |0.50      |
+|Macro-moyenne F1|0.23         |0.15|0.25       |0.28      |
+
+
+## Interprétation
+
+Nos modèles sont relativement peu précis. Tous présentent un fonctionnement global proche de 40-50% (si on se concentre sur l'accuracy et les micro-averages). Les macro-averages sont en revanche bien moins bons. La différence entre les deux moyennes montrent qu'il existe une grande disparité d'efficacité selon la classe. On peut expliquer cette disparité par le fait que certaines classes ont très peu de données (quelques dizaines), les erreurs prennent donc plus de poids dans les métriques et leur faible volume rend la classification plus difficile. Les scores F1 montrent un équilibre entre la précision et le rappel.
+
+Cependant, on observe sur les matrices de confusion que les erreurs de classification se concentrent sur les périodes adjacentes. Cela veut dire que les classifieurs se trompent, mais que les erreurs sont moindres à mesure que la période prédite s'écarte de la période réelle. On peut ainsi affirmer – avec un certain optimisme – que nos classifieurs ont réussi à déceler à leur manière un certain degré de temporalité des données.
+
+La faible performance de nos classifieurs peut aussi s'expliquer par notre source de données elle-même. Wikisource propose des retranscriptions et traductions de textes anciens, leur forme n'est donc pas forcément fidèle aux écrits originaux. Même si, dans le cas des traductions, nous avons fait attention de garder comme période celle de la traduction plutôt que du texte traduit, il reste que le passage par des réécritures et transformations successives nous éloigne de la forme authentique des documents que nous souhaitons dater.
+
+Enfin, nos ordinateurs présentant des capacités de calcul limitées, nous n'avons pas pu appliquer nos modèles sur l'entiereté des données collectées. Nous avons du couper dans notre dataset (environ 10000 documents) pour garantir des temps de calcul corrects. Cette coupe s'est opérée à l'échelle du nombre de documents, mais aussi à l'échelle du nombre de _features_ (dimensions) de nos vecteurs.
+
+## Pistes d'amélioration
+
+Pour améliorer les résultats de nos classifieurs et affiner la classification temporelle, nous pourrions envisager les pistes d'amélioration suivantes :
+
+- Augmenter notre dataset d'entraînement en ayant recours à une machine plus puissante. L'augmentation concernerait autant le nombre de document que de _features_.
+- Changer de source de données pour obtenir des transcriptions de textes anciens et récents directement depuis leurs originaux (et non de traductions ou de réécritures). Cela pourrait passer par une océrisation de scans, comme le propose Gallica par exemple (ce que nous avions envisagé initialement d'ailleurs).
+- Trouver d'autres manières de produire une représentation vectorielle des documents. La nôtre est très lexicale, nous pourrions envisager des représentations plus sémantiques, comme BERT par exemple.
