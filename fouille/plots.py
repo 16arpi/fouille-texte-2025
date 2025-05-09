@@ -12,12 +12,14 @@ from fouille.config import (
 	RAW_CATEGORIES_LIST,
 	RAW_CATEGORIES_VIZ,
 	RAW_DATASET,
+	FULL_DATASET,
+	GOLD_CATEGORIES_VIZ,
 )
 
 app = typer.Typer()
 
 
-def plot_raw_categories_distribution():
+def plot_raw_categories_distribution() -> None:
 	logger.info("Generating categorical distribution plot from raw data...")
 
 	lf = pl.scan_parquet(RAW_DATASET)
@@ -47,7 +49,7 @@ def plot_raw_categories_distribution():
 			y="len",
 			color="categories",
 		)
-		.properties(width=1024, title="Distribution par catégories brutes")
+		.properties(width=1024, title="Distribution par catégorie brute")
 		.configure_scale(zero=False)
 		.configure_axisX(tickMinStep=1)
 	)
@@ -58,7 +60,7 @@ def plot_raw_categories_distribution():
 	logger.success("Plot generation complete.")
 
 
-def plot_clean_categories_distribution():
+def plot_clean_categories_distribution() -> None:
 	logger.info("Generating categorical distribution plot from clean data...")
 
 	lf = pl.scan_parquet(CLEAN_DATASET)
@@ -81,7 +83,7 @@ def plot_clean_categories_distribution():
 			y="pages",
 			color="pubyear",
 		)
-		.properties(width=1024, title="Distribution par catégories exactes")
+		.properties(width=1024, title="Distribution par catégorie exacte")
 		.configure_scale(zero=False)
 		.configure_axisX(tickMinStep=1)
 	)
@@ -96,7 +98,7 @@ def plot_clean_categories_distribution():
 			y="characters",
 			color="pubyear",
 		)
-		.properties(width=1024, title="Distribution par catégories exactes")
+		.properties(width=1024, title="Distribution par catégorie exacte")
 		.configure_scale(zero=False)
 		.configure_axisX(tickMinStep=1)
 	)
@@ -107,10 +109,60 @@ def plot_clean_categories_distribution():
 	logger.success("Plot generation complete.")
 
 
+def plot_gold_categories_distribution() -> None:
+	logger.info("Generating categorical distribution plot from final data...")
+
+	lf = pl.scan_parquet(FULL_DATASET)
+
+	distrib = (
+		# We don't need any other columns
+		lf.select("semicentury", "text")
+		# Duh'
+		.group_by("semicentury")
+		# Compute the amount of rows per group (i.e., pages)
+		# Then the the amount of characters per group (each group is an aggregate of rows)
+		.agg(pl.len().alias("pages"), pl.col("text").str.len_chars().sum().alias("characters"))
+		.collect()
+	)
+
+	# Pages (i.e., rows) per individual category distribution
+	chart = (
+		distrib.plot.bar(
+			x="semicentury",
+			y="pages",
+			color="semicentury",
+		)
+		.properties(width=1024, title="Distribution par classe")
+		.configure_scale(zero=False)
+		.configure_axisX(tickMinStep=1)
+	)
+	chart.encoding.x.title = "Classe"
+	chart.encoding.y.title = "Pages"
+	chart.save(GOLD_CATEGORIES_VIZ)
+
+	# Maybe slightly more telling, *characters* per category
+	chart = (
+		distrib.plot.bar(
+			x="semicentury",
+			y="characters",
+			color="semicentury",
+		)
+		.properties(width=1024, title="Distribution par classe")
+		.configure_scale(zero=False)
+		.configure_axisX(tickMinStep=1)
+	)
+	chart.encoding.x.title = "Classe"
+	chart.encoding.y.title = "Signes"
+	chart.save(CLEAN_CATEGORIES_VIZ.with_stem(GOLD_CATEGORIES_VIZ.stem + "-chars"))
+
+	logger.success("Plot generation complete.")
+
+
 @app.command()
 def main() -> None:
 	plot_raw_categories_distribution()
 	plot_clean_categories_distribution()
+	plot_gold_categories_distribution()
 
 
 if __name__ == "__main__":

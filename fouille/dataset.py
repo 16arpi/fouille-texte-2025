@@ -20,7 +20,7 @@ from fouille.config import (
 app = typer.Typer()
 
 
-def extract_gold_classes():
+def extract_gold_classes() -> None:
 	logger.info("Extracting exact gold classes from raw data...")
 
 	lf = pl.scan_parquet(RAW_DATASET)
@@ -57,7 +57,7 @@ def extract_gold_classes():
 	lf.sink_parquet(CLEAN_DATASET)
 
 
-def label_gold_classes():
+def label_gold_classes() -> None:
 	logger.info("Labelling clean data w/ gold classes...")
 
 	lf = pl.scan_parquet(CLEAN_DATASET)
@@ -75,7 +75,7 @@ def label_gold_classes():
 	lf.sink_parquet(FULL_DATASET)
 
 
-def split_dataset():
+def split_dataset() -> None:
 	logger.info("Stratified split on gold class...")
 
 	lf = pl.scan_parquet(FULL_DATASET)
@@ -111,7 +111,7 @@ def split_dataset():
 	lf_dev.write_parquet(DEV_DATASET)
 
 
-def tiny_splits():
+def tiny_splits() -> None:
 	logger.info("Tiny splits...")
 
 	# We'll work on 15% of those to keep things practical in terms of computational costs
