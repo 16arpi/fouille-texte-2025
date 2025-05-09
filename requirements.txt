@@ -12,7 +12,7 @@ rich
 zstandard
 pandas
 polars
-polars_splitters
+polars-splitters
 altair
 vegafusion[embed]
 wikitextparser
