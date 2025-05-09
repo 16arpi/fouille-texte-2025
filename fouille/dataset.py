@@ -88,7 +88,7 @@ def split_dataset() -> None:
 		shuffle=True,
 		seed=42,
 		validate=True,
-		as_lazy=False,  # NYI?
+		as_lazy=True,
 		rel_size_deviation_tolerance=0.1,
 	)
 
@@ -100,15 +100,15 @@ def split_dataset() -> None:
 		shuffle=True,
 		seed=42,
 		validate=True,
-		as_lazy=False,  # NYI?
+		as_lazy=True,
 		rel_size_deviation_tolerance=0.1,
 	)
 
 	# Dump to disk
 	logger.info("Dumping to disk...")
-	lf_train.write_parquet(TRAIN_DATASET)
-	lf_test.write_parquet(TEST_DATASET)
-	lf_dev.write_parquet(DEV_DATASET)
+	lf_train.sink_parquet(TRAIN_DATASET)
+	lf_test.sink_parquet(TEST_DATASET)
+	lf_dev.sink_parquet(DEV_DATASET)
 
 
 def tiny_splits() -> None:
@@ -124,11 +124,11 @@ def tiny_splits() -> None:
 		shuffle=True,
 		seed=42,
 		validate=True,
-		as_lazy=False,  # NYI?
+		as_lazy=True,
 		rel_size_deviation_tolerance=0.1,
 	)
-	lf_tiny_test.write_parquet(TINY_TEST_DATASET)
-	lf_tiny_test.write_csv(TINY_TEST_DATASET.with_suffix(".csv"))
+	lf_tiny_test.sink_parquet(TINY_TEST_DATASET)
+	lf_tiny_test.sink_csv(TINY_TEST_DATASET.with_suffix(".csv"))
 
 	lf = pl.scan_parquet(DEV_DATASET)
 	lf_tiny_dev, _ = split_into_train_eval(
@@ -138,11 +138,11 @@ def tiny_splits() -> None:
 		shuffle=True,
 		seed=42,
 		validate=True,
-		as_lazy=False,  # NYI?
+		as_lazy=True,
 		rel_size_deviation_tolerance=0.1,
 	)
-	lf_tiny_dev.write_parquet(TINY_DEV_DATASET)
-	lf_tiny_dev.write_csv(TINY_DEV_DATASET.with_suffix(".csv"))
+	lf_tiny_dev.sink_parquet(TINY_DEV_DATASET)
+	lf_tiny_dev.sink_csv(TINY_DEV_DATASET.with_suffix(".csv"))
 
 
 @app.command()
