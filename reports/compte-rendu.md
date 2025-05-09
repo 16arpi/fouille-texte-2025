@@ -4,9 +4,30 @@
 ## César Pichon ([@16arpi](https://github.com/16arpi))
 ## Damien Biguet ([@NiLuJe](https://github.com/NiLuJe))
 
-(toc)
+- [Objectifs](#objectifs)
+- [Données & Ressources](#données--ressources)
+	- [Exploitation du dump wikisource](#exploitation-du-dump-wikisource)
+	- [Exploration & Extraction des données](#exploration--extraction-des-données)
+	- [Nettoyage final & sélection des labels de classification](#nettoyage-final--sélection-des-labels-de-classification)
+		- [Exploration des catégories extraites](#exploration-des-catégories-extraites)
+		- [Distribution par catégorie](#distribution-par-catégorie)
+		- [Partitionnement des données](#partitionnement-des-données)
+- [Prérequis](#prérequis)
+	- [Mise en place du dépôt](#mise-en-place-du-dépôt)
+	- [Gestion des données](#gestion-des-données)
+- [Préparation des données vectorielles](#préparation-des-données-vectorielles)
+	- [Tokenisation](#tokenisation)
+	- [Représentations vectorielles](#représentations-vectorielles)
+	- [Division en corpus d'entraînement et d'évaluation](#division-en-corpus-dentraînement-et-dévaluation)
+- [Expériences](#expériences)
+- [Résultats](#résultats)
+	- [Matrices de confusion](#matrices-de-confusion)
+	- [Accuracy, micro/macro-moyennes de précision et de rappel](#accuracy-micromacro-moyennes-de-précision-et-de-rappel)
+	- [Reproduction](#reproduction)
+	- [Interprétation](#interprétation)
+	- [Pistes d'amélioration](#pistes-damélioration)
 
-----
+---- 
 
 # Objectifs
 
@@ -35,7 +56,7 @@ En sortie de notre pipeline `xmltodict`, on se retrouve donc avec des objets Pyt
 On implémente donc une [boucle de lecture du flux compressé](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L309-L313) (avec une jolie barre de progression pour prendre notre mal en patience), couplé à un [générateur](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L92-L102) pour décoder l'objet.
 
 On commence par étudier les structures de données en affichant le contenu de quelques pages via [rich.pretty.pprint](https://rich.readthedocs.io/en/stable/pretty.html) pour identifier les champs qui nous intéressent (i.e., le titre et le contenu textuel), et on vérifie la cohérence des résultats en allant explorer la version XML du dump. On isole assez facilement tout ça (c.f., [la fonction `page_extract`](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L105-L148)), mais on se rend compte assez rapidement que tout le reste des informations va se trouver dans le texte brut, qui est dans un format bien spécifique, [Wikitext](https://en.wikipedia.org/wiki/Help:Wikitext), augmenté de [conventions spécifiques à Wikisource](https://en.wikisource.org/wiki/Wikisource:Style_guide).  
-Et c'est là que le deuxième effet kiss-cool de l'utilisation des dumps au lieu du contenu des pages HTML générées se fait sentir: en fait, une écrasante majorité des pages contient du contenu généré dynamiquement (via un système de *templates* assez complexe), en particulier, les pages qui contiennent les informations de catégorisation, et qui sont celles indexées et vouées à être consultées, sont quasiment *toutes* générés dynamiquement, et ne contiennent donc que le *markup* de catégorisation, et le *markup* de magie noire qui va chercher le contenu textuel ailleurs... Cet "ailleurs" se trouve en fait être des pages sous le préfixe/espace de nommage `Livre:`, qui se base sur *un* facsimilé spécifique, et comporte les informations de publication de *ce* facsimilé (informations potentiellement différentes des pages qui l'incluent, nous y reviendrons plus tard), et qui, à son tour, contient la liste de *chaque* page de cet ouvrage, sous le préfixe *Page:*, qui sont, enfin, les pages qui contiennent le contenu textuel... mais qui, malheureusement, ne contiennent *plus aucune* information de classification!  
+Et c'est là que le deuxième effet kiss-cool de l'utilisation des dumps au lieu du contenu des pages HTML générées se fait sentir: en fait, une écrasante majorité des pages contient du contenu généré dynamiquement (via un système de *templates* assez complexe), en particulier, les pages qui contiennent les informations de catégorisation, et qui sont celles indexées et vouées à être consultées, sont quasiment *toutes* générés dynamiquement, et ne contiennent donc que le *markup* de catégorisation, et le *markup* de magie noire qui va chercher le contenu textuel ailleurs... Cet "ailleurs" se trouve en fait être des pages sous le préfixe/espace de noms `Livre:`, qui se base sur *un* facsimilé spécifique, et comporte les informations de publication de *ce* facsimilé (informations potentiellement différentes des pages qui l'incluent, nous y reviendrons plus tard), et qui, à son tour, contient la liste de *chaque* page de cet ouvrage, sous le préfixe *Page:*, qui sont, enfin, les pages qui contiennent le contenu textuel... mais qui, malheureusement, ne contiennent *plus aucune* information de classification!  
 On se retrouve donc avec plusieurs problèmes purement techniques à gérer pour démêler tout ça:
 
 - On va avoir besoin de pouvoir exploiter le *markup* Wikitext pour pouvoir en extraire le texte brut, les informations de catégorisation, et les *templates* qui gèrent le système de génération dynamique décrit à l'instant.
@@ -74,7 +95,7 @@ Bref, on a donc besoin de:
 C'est aussi à cette étape que l'on extrait le texte brut en éliminant le markup (wikitextparser propose une méthode `plain_text()` qui fait le plus gros de la tâche, mais on a quand même besoin de supprimer les informations de catégorisation, puisqu'elles incluent la date que l'on cherchera à prédire. En pratique, comme on vient de le montrer, les pages avec infos de catégorisation ne contiennent *pas* de "vrai" contenu textuel, donc c'est moins problématique que les commentaires initiaux qui persistent dans le code peuvent le laisser entendre).  
 On applique aussi une série d'heuristiques pour filtrer les pages "vides" de contenu, soit simplement quand elles ne contiennent que [peu de caractères](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L86), soit parce qu'elles sont [générées](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L214-L229) [dynamiquement](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L235-L245) (évidemment, il y a deux types de markups différents pour implémenter la chose...).  
 On utilise aussi [l'indice de qualité](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L235-L245) pour évincer les pages de mauvaise qualité (selon les contributeurs wikisource).
-- Réattribuer les catégories extraites des pages "mères" (sans contenu textuel) aux pages "filles" (sans catégories): on essaye d'abord [pendant l'itération initiale](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L282-L288), en espérant qu'on ait déjà visité la page mère, mais comme cela n'est absolument pas une garantie, on a besoin d'une [deuxième passe](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L327-L344) qui refait une boucle complète sur les pages extraites.
+- Ré-attribuer les catégories extraites des pages "mères" (sans contenu textuel) aux pages "filles" (sans catégories): on essaye d'abord [pendant l'itération initiale](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L282-L288), en espérant qu'on ait déjà visité la page mère, mais comme cela n'est absolument pas une garantie, on a besoin d'une [deuxième passe](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L327-L344) qui refait une boucle complète sur les pages extraites.
 
 Au même titre que pendant la conversion `xmltodict`, on arrive en fin de chaîne avec une liste de dictionnaires assez conséquente: le script requiert autour de 16GB de RAM. Et au vu du nombre assez massif de pages, la bête prend un temps assez conséquent à faire tourner (~2H30 pour la version finale). Comme il nous reste un peu de traitement à effectuer pour mettre de l'ordre dans les catégories extraites, on va stocker le tout dans une [`DataFrame`](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/data/extract_data.py#L346-L373), dans l'espoir que le travail sur un tel objet soit plus efficace. Cette étape utilise [pandas](https://pandas.pydata.org/), parce qu'écrite avant de voir la lumière: la suite passera par [Polars](https://pola.rs/) pour profiter de bien, bien, bien meilleures performances (tant en termes d'espace que de temps), d'une API plus expressive, et de la possibilité de travailler sur des objets sans les mettre entièrement en mémoire. Un plus non négligeable, vu qu'on obtient un tableau de 3.228 *millions* de lignes, qui occupe 2.9GB dans un fichier parquet compressé via zstd...  
 Le nombre de lignes (i.e., de documents) explose par rapport au nombre d'*ouvrages* disponibles sur Wikisource, du fait que les pages ayant un vrai contenu textuel que l'on garde correspondent en fait à chaque fois à *une* page de l'ouvrage physique... On se retrouve donc avec potentiellement des centaines de lignes dans le tableau pour un seul ouvrage.
@@ -173,7 +194,7 @@ Notre corpus s'étalant sur plusieurs siècles, nous devions prévoir une tokeni
 
 ## Représentations vectorielles
 
-La tokenisation faite, il fallait ensuite construire pour chaque document une représentation vectorielle en sac de mot. Pour cela, nous sommes passé par la classe `CountVectorizer` de SciKit-Learn. Celle-ci permet une vectorisation rapide des textes, tout en acceptant notre méthode de tokenisation. De plus, parce que notre corpus est très volumineux, nous avons fait le choix de nous débarasser des tokens dont la fréquence parmi les documents est inférieure à 5% : sans cette règle, nous aurions eu un nombre de dimensions bien trop important.
+La tokenisation faite, il fallait ensuite construire pour chaque document une représentation vectorielle en sac de mot. Pour cela, nous sommes passé par la classe `CountVectorizer` de SciKit-Learn. Celle-ci permet une vectorisation rapide des textes, tout en acceptant notre méthode de tokenisation. De plus, parce que notre corpus est très volumineux, nous avons fait le choix de nous débarrasser des tokens dont la fréquence parmi les documents est inférieure à 5% : sans cette règle, nous aurions eu un nombre de dimensions bien trop important.
 
 ## Division en corpus d'entraînement et d'évaluation
 
@@ -185,7 +206,7 @@ Nos vecteurs en poche, la dernière étape de préparation de nos données a ét
 
 La partition choisie est de 80%/20%. Cette étape a été possible grâce à la méthode `train_test_split()` de Sci-Kit Learn.
 
-NOTE: Comme on l'explique en conclusion, malgré le partitionnement initial des données, on a travaillé sur un ensemble encore plus restreint pour des questions de performances, d'où la 3e passe de partitionnement de données!
+NOTE: Comme on l'explique en conclusion, malgré le partitionnement initial des données, on a travaillé sur un ensemble encore plus restreint pour des questions de performances, d'où cette 3e passe de partitionnement de données!
 
 La sélection s'est faite par l'outil `xan`:
 ```
@@ -195,9 +216,9 @@ xan sample 10000 data/processed/frwikisource-dev-tiny.csv
 
 # Expériences
 
-Les expériences ont consistés à tester [quatre méthodes de classification supervisée](https://github.com/16arpi/fouille-texte-2025/blob/classifiers/fouille/modeling/models.py), toutes proposées par SciKit-Learn :
+Les expériences ont consisté à tester [quatre méthodes de classification supervisée](https://github.com/16arpi/fouille-texte-2025/blob/classifiers/fouille/modeling/models.py), toutes proposées par SciKit-Learn :
 
-- Un _arbre de décision (DecisionTree)_. Le choix des disciminants se fait par l'indice de Gini.
+- Un _arbre de décision (DecisionTree)_. Le choix des discriminants se fait par l'indice de Gini.
 - Un _Support Vector Machine (SVC)_. Dans notre cas, le SVM utile un kernel RBF (Radial Basis Function).
 - Un _Naive Bayes multinominal (MultinomialNB)_. Cette variante de Naive Bayes est adapté à une classification multiple.
 - Un _Multi Layer Perceptron (MLP)_. Notre instance utilise deux couches intermédiaires de 100 poids, Adam comme méthode de descente du gradient et ReLU comme fonction d'activation.
@@ -210,86 +231,86 @@ Pour évaluer nos modèles, nous avons calculé pour chacun d'eux une matrice de
 
 ## Matrices de confusion
 
-| |1450|1500|1550|1600|1650|1700|1750|1800|1850|1900|1950|2000|
-|------|----|----|----|----|----|----|----|----|----|----|----|----|
-|1450  |0   |0   |0   |0   |0   |0   |0   |1   |0   |0   |0   |0   |
-|1500  |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |
-|1550  |0   |0   |0   |0   |0   |0   |0   |0   |0   |2   |0   |0   |
-|1600  |0   |0   |1   |2   |2   |0   |3   |1   |2   |0   |0   |0   |
-|1650  |0   |1   |3   |0   |8   |2   |1   |0   |1   |0   |0   |0   |
-|1700  |0   |0   |0   |0   |1   |4   |7   |0   |0   |3   |0   |0   |
-|1750  |0   |0   |0   |2   |2   |11  |54  |10  |11  |5   |0   |0   |
-|1800  |0   |0   |0   |0   |1   |1   |8   |72  |134 |78  |3   |1   |
-|1850  |0   |1   |2   |1   |2   |2   |13  |128 |463 |272 |15  |2   |
-|1900  |0   |0   |1   |1   |3   |4   |2   |63  |273 |263 |3   |3   |
-|1950  |0   |0   |0   |0   |0   |0   |0   |6   |16  |13  |1   |0   |
-|2000  |0   |0   |0   |0   |0   |0   |0   |1   |5   |3   |0   |0   |
+|      | 1450 | 1500 | 1550 | 1600 | 1650 | 1700 | 1750 | 1800 | 1850 | 1900 | 1950 | 2000 |
+| ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| 1450 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    | 0    | 0    | 0    |
+| 1500 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+| 1550 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 2    | 0    | 0    |
+| 1600 | 0    | 0    | 1    | 2    | 2    | 0    | 3    | 1    | 2    | 0    | 0    | 0    |
+| 1650 | 0    | 1    | 3    | 0    | 8    | 2    | 1    | 0    | 1    | 0    | 0    | 0    |
+| 1700 | 0    | 0    | 0    | 0    | 1    | 4    | 7    | 0    | 0    | 3    | 0    | 0    |
+| 1750 | 0    | 0    | 0    | 2    | 2    | 11   | 54   | 10   | 11   | 5    | 0    | 0    |
+| 1800 | 0    | 0    | 0    | 0    | 1    | 1    | 8    | 72   | 134  | 78   | 3    | 1    |
+| 1850 | 0    | 1    | 2    | 1    | 2    | 2    | 13   | 128  | 463  | 272  | 15   | 2    |
+| 1900 | 0    | 0    | 1    | 1    | 3    | 4    | 2    | 63   | 273  | 263  | 3    | 3    |
+| 1950 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 6    | 16   | 13   | 1    | 0    |
+| 2000 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 5    | 3    | 0    | 0    |
 
 _Arbre de décision_
 
-| |1450|1500|1550|1600|1650|1700|1750|1800|1850|1900|1950|2000|
-|------|----|----|----|----|----|----|----|----|----|----|----|----|
-|1450  |0   |0   |0   |0   |0   |0   |0   |0   |1   |0   |0   |0   |
-|1500  |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |
-|1550  |0   |0   |0   |0   |0   |0   |0   |0   |2   |0   |0   |0   |
-|1600  |0   |0   |0   |0   |0   |0   |4   |0   |7   |0   |0   |0   |
-|1650  |0   |0   |0   |0   |0   |0   |7   |0   |8   |1   |0   |0   |
-|1700  |0   |0   |0   |0   |0   |0   |6   |0   |9   |0   |0   |0   |
-|1750  |0   |0   |0   |0   |0   |0   |53  |0   |41  |1   |0   |0   |
-|1800  |0   |0   |0   |0   |0   |0   |0   |8   |285 |5   |0   |0   |
-|1850  |0   |0   |0   |0   |0   |0   |6   |0   |841 |54  |0   |0   |
-|1900  |0   |0   |0   |0   |0   |0   |0   |1   |485 |130 |0   |0   |
-|1950  |0   |0   |0   |0   |0   |0   |0   |0   |24  |12  |0   |0   |
-|2000  |0   |0   |0   |0   |0   |0   |0   |0   |7   |2   |0   |0   |
+|      | 1450 | 1500 | 1550 | 1600 | 1650 | 1700 | 1750 | 1800 | 1850 | 1900 | 1950 | 2000 |
+| ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| 1450 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    | 0    | 0    |
+| 1500 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+| 1550 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 2    | 0    | 0    | 0    |
+| 1600 | 0    | 0    | 0    | 0    | 0    | 0    | 4    | 0    | 7    | 0    | 0    | 0    |
+| 1650 | 0    | 0    | 0    | 0    | 0    | 0    | 7    | 0    | 8    | 1    | 0    | 0    |
+| 1700 | 0    | 0    | 0    | 0    | 0    | 0    | 6    | 0    | 9    | 0    | 0    | 0    |
+| 1750 | 0    | 0    | 0    | 0    | 0    | 0    | 53   | 0    | 41   | 1    | 0    | 0    |
+| 1800 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 8    | 285  | 5    | 0    | 0    |
+| 1850 | 0    | 0    | 0    | 0    | 0    | 0    | 6    | 0    | 841  | 54   | 0    | 0    |
+| 1900 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 485  | 130  | 0    | 0    |
+| 1950 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 24   | 12   | 0    | 0    |
+| 2000 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 7    | 2    | 0    | 0    |
 
 _Support Vector Machine_
 
-| |1450|1500|1550|1600|1650|1700|1750|1800|1850|1900|1950|2000|
-|------|----|----|----|----|----|----|----|----|----|----|----|----|
-|1450  |0   |0   |0   |0   |0   |0   |1   |0   |0   |0   |0   |0   |
-|1500  |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |
-|1550  |0   |0   |0   |1   |0   |0   |0   |0   |1   |0   |0   |0   |
-|1600  |0   |0   |4   |2   |3   |2   |0   |0   |0   |0   |0   |0   |
-|1650  |0   |0   |1   |1   |10  |2   |1   |1   |0   |0   |0   |0   |
-|1700  |0   |0   |1   |0   |2   |5   |6   |0   |1   |0   |0   |0   |
-|1750  |0   |0   |1   |0   |4   |14  |60  |10  |6   |0   |0   |0   |
-|1800  |0   |1   |1   |0   |0   |5   |10  |138 |95  |17  |29  |2   |
-|1850  |0   |0   |5   |4   |0   |10  |8   |193 |460 |115 |97  |9   |
-|1900  |0   |0   |5   |1   |1   |2   |7   |82  |257 |162 |89  |10  |
-|1950  |0   |0   |0   |0   |0   |0   |0   |6   |10  |12  |8   |0   |
-|2000  |0   |0   |0   |0   |0   |0   |0   |1   |3   |3   |1   |1   |
+|      | 1450 | 1500 | 1550 | 1600 | 1650 | 1700 | 1750 | 1800 | 1850 | 1900 | 1950 | 2000 |
+| ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| 1450 | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    | 0    | 0    | 0    | 0    |
+| 1500 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+| 1550 | 0    | 0    | 0    | 1    | 0    | 0    | 0    | 0    | 1    | 0    | 0    | 0    |
+| 1600 | 0    | 0    | 4    | 2    | 3    | 2    | 0    | 0    | 0    | 0    | 0    | 0    |
+| 1650 | 0    | 0    | 1    | 1    | 10   | 2    | 1    | 1    | 0    | 0    | 0    | 0    |
+| 1700 | 0    | 0    | 1    | 0    | 2    | 5    | 6    | 0    | 1    | 0    | 0    | 0    |
+| 1750 | 0    | 0    | 1    | 0    | 4    | 14   | 60   | 10   | 6    | 0    | 0    | 0    |
+| 1800 | 0    | 1    | 1    | 0    | 0    | 5    | 10   | 138  | 95   | 17   | 29   | 2    |
+| 1850 | 0    | 0    | 5    | 4    | 0    | 10   | 8    | 193  | 460  | 115  | 97   | 9    |
+| 1900 | 0    | 0    | 5    | 1    | 1    | 2    | 7    | 82   | 257  | 162  | 89   | 10   |
+| 1950 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 6    | 10   | 12   | 8    | 0    |
+| 2000 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 3    | 3    | 1    | 1    |
 
 _Naive Bayes_
 
-| |1450|1500|1550|1600|1650|1700|1750|1800|1850|1900|1950|2000|
-|------|----|----|----|----|----|----|----|----|----|----|----|----|
-|1450  |0   |0   |0   |0   |0   |0   |0   |0   |1   |0   |0   |0   |
-|1500  |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |0   |
-|1550  |0   |0   |0   |0   |0   |0   |0   |0   |1   |1   |0   |0   |
-|1600  |0   |0   |0   |3   |2   |0   |1   |1   |3   |0   |1   |0   |
-|1650  |0   |0   |1   |0   |6   |2   |1   |0   |5   |1   |0   |0   |
-|1700  |0   |0   |0   |0   |0   |2   |10  |1   |2   |0   |0   |0   |
-|1750  |0   |0   |0   |0   |1   |3   |67  |6   |11  |7   |0   |0   |
-|1800  |0   |0   |0   |0   |0   |2   |8   |106 |126 |54  |2   |0   |
-|1850  |0   |0   |1   |2   |2   |1   |13  |88  |542 |248 |3   |1   |
-|1900  |0   |0   |0   |1   |1   |0   |0   |43  |268 |298 |5   |0   |
-|1950  |0   |0   |0   |0   |0   |0   |0   |2   |14  |20  |0   |0   |
-|2000  |0   |0   |0   |0   |0   |0   |0   |2   |2   |5   |0   |0   |
+|      | 1450 | 1500 | 1550 | 1600 | 1650 | 1700 | 1750 | 1800 | 1850 | 1900 | 1950 | 2000 |
+| ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| 1450 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 0    | 0    | 0    |
+| 1500 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+| 1550 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    | 1    | 0    | 0    |
+| 1600 | 0    | 0    | 0    | 3    | 2    | 0    | 1    | 1    | 3    | 0    | 1    | 0    |
+| 1650 | 0    | 0    | 1    | 0    | 6    | 2    | 1    | 0    | 5    | 1    | 0    | 0    |
+| 1700 | 0    | 0    | 0    | 0    | 0    | 2    | 10   | 1    | 2    | 0    | 0    | 0    |
+| 1750 | 0    | 0    | 0    | 0    | 1    | 3    | 67   | 6    | 11   | 7    | 0    | 0    |
+| 1800 | 0    | 0    | 0    | 0    | 0    | 2    | 8    | 106  | 126  | 54   | 2    | 0    |
+| 1850 | 0    | 0    | 1    | 2    | 2    | 1    | 13   | 88   | 542  | 248  | 3    | 1    |
+| 1900 | 0    | 0    | 0    | 1    | 1    | 0    | 0    | 43   | 268  | 298  | 5    | 0    |
+| 1950 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 2    | 14   | 20   | 0    | 0    |
+| 2000 | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 2    | 2    | 5    | 0    | 0    |
 
 
 _Multi Layer Perceptron_
 
 ## _Accuracy_, micro/macro-moyennes de précision et de rappel
 
-| |Decision Tree|SVM|Naive Bayes|Perceptron|
-|------|-------------|---|-----------|----------|
-|Accuracy|0.43         |0.52|0.42       |0.51      |
-|Micro-moyenne Précision|0.43         |0.58|0.50       |0.50      |
-|Macro-moyenne Précision|0.23         |0.25|0.25       |0.30      |
-|Micro-moyenne Rappel|0.43         |0.52|0.42       |0.51      |
-|Macro-moyenne Rappel|0.23         |0.16|0.28       |0.27      |
-|Micro-moyenne F1|0.43         |0.42|0.44       |0.50      |
-|Macro-moyenne F1|0.23         |0.15|0.25       |0.28      |
+|                         | Decision Tree | SVM  | Naive Bayes | Perceptron |
+| ----------------------- | ------------- | ---- | ----------- | ---------- |
+| Accuracy                | 0.43          | 0.52 | 0.42        | 0.51       |
+| Micro-moyenne Précision | 0.43          | 0.58 | 0.50        | 0.50       |
+| Macro-moyenne Précision | 0.23          | 0.25 | 0.25        | 0.30       |
+| Micro-moyenne Rappel    | 0.43          | 0.52 | 0.42        | 0.51       |
+| Macro-moyenne Rappel    | 0.23          | 0.16 | 0.28        | 0.27       |
+| Micro-moyenne F1        | 0.43          | 0.42 | 0.44        | 0.50       |
+| Macro-moyenne F1        | 0.23          | 0.15 | 0.25        | 0.28       |
 
 
 ## Reproduction
@@ -316,7 +337,7 @@ Cependant, on observe sur les matrices de confusion que les erreurs de classific
 
 La faible performance de nos classifieurs peut aussi s'expliquer par notre source de données elle-même. Wikisource propose des retranscriptions et traductions de textes anciens, leur forme n'est donc pas forcément fidèle aux écrits originaux. Même si, dans le cas des traductions, nous avons fait attention de garder comme période celle de la traduction plutôt que du texte traduit, il reste que le passage par des réécritures et transformations successives nous éloigne de la forme authentique des documents que nous souhaitons dater.
 
-Enfin, nos ordinateurs présentant des capacités de calcul limitées, nous n'avons pas pu appliquer nos modèles sur l'entiereté des données collectées. Nous avons du couper dans notre dataset (environ 10000 documents) pour garantir des temps de calcul corrects. Cette coupe s'est opérée à l'échelle du nombre de documents, mais aussi à l'échelle du nombre de _features_ (dimensions) de nos vecteurs.
+Enfin, nos ordinateurs présentant des capacités de calcul limitées, nous n'avons pas pu appliquer nos modèles sur l’entièreté des données collectées. Nous avons du couper dans notre dataset (environ 10000 documents) pour garantir des temps de calcul corrects. Cette coupe s'est opérée à l'échelle du nombre de documents, mais aussi à l'échelle du nombre de _features_ (dimensions) de nos vecteurs.
 
 ## Pistes d'amélioration
 
