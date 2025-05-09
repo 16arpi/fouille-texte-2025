@@ -88,7 +88,7 @@ Afin d'avoir un peu plus de visibilité sur les catégories extraites, on va (es
 
 - On devrait pouvoir simplement [extraire tout ce qui ressemble à une date](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L39-L41) sans trop de problème (au vu des données, on peut se limiter à l'intervalle 1000-2999 pour éviter les coquilles tout en gardant notre expression régulière simple)
 - Il existe une série de catégorie "Domaine public en YYYY", qui pourrait fausser nos résultats si l'on se contentait d'extraire les dates de chaque catégorie sans [évincer cette série](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L36-L37)...
-- Comme indiqué plus haut, on peut trouver *plusieurs* dates pour une même page, on veut donc garder la plus récente, afin de gérer les traductions proprement.
+- Comme indiqué plus haut, on peut trouver *plusieurs* dates pour une même page, on veut donc [garder la plus récente](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L48-L50), afin de gérer les traductions proprement.
 
 Grâce à la magie des `LazyFrame` Polars, on peut donc implémenter cette passe de traitement [entièrement avec des expression Polars](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L23-L61), et la chose tourne en quelques secondes seulement!
 
@@ -123,6 +123,8 @@ On finit avec effectivement une très faible population pour les classes < 1600,
 Afin d'essayer de préserver ces classes minoritaires, on va procéder à un [partitionnement stratifié](https://scikit-learn.org/stable/modules/cross_validation.html#stratification), via le module [polars_splitters](https://github.com/machml/polars_splitters).
 
 On suit le schéma classique [train/dev/test à 80/10/10](https://github.com/16arpi/fouille-texte-2025/blob/061316cb974473dff16c25912fbc08c0b24d689e/fouille/dataset.py#L86-L123), en se permettant une petite entorse: au vu des quantités massives de données, on ne va garder que 15% du dev pour faciliter et accélérer l'itération pendant le développement.
+
+En observant les petites partitions, on remarque que, comme on s'y attendait, les classes à très faible populations ont disparues de notre jeu de données, donc les résultats ne seront cohérents que sur une partie des classes, celles qui restaient dans le sous-corpus d'entraînement.
 
 --
 
