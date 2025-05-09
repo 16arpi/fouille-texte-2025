@@ -52,3 +52,4 @@ End of term project, text classification by date.
 
 --------
 
+## [Final Report](reports/compte-rendu.md)
