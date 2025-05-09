@@ -55,10 +55,10 @@ sync_processed_data_down:
 	aws s3 sync s3://tal-m1-fouille/data/processed/ \
 		data/processed/
 
-## Download experiment data
+## Download experiment data w/o S3
 .PHONY: download_data
 download_data:
-	@echo FIXME
+	$(PROJECT_DIR)/data/dl_data.sh
 
 ## Upload Data to storage system
 .PHONY: sync_data_up
