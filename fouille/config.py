@@ -20,6 +20,7 @@ MODELS_DIR = PROJ_ROOT / "models"
 
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
+CONFUSION_DIR = FIGURES_DIR / "confusion"
 
 # Datasets
 RAW_DATASET = INTERIM_DATA_DIR / "frwikisource-current.parquet"
