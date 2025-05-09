@@ -292,6 +292,22 @@ _Multi Layer Perceptron_
 |Macro-moyenne F1|0.23         |0.15|0.25       |0.28      |
 
 
+## Reproduction
+
+Ces expériences peuvent être reproduites avec les commandes suivantes:
+
+```bash
+# Téléchargement de l'échantillon final
+make download_data
+
+# Vectorisation
+./fouille/features.py data/processed/frwikisource-dev-micro.csv
+
+# Entraînement, inférence & évaluation
+./fouille/modeling/models.py
+```
+
+
 ## Interprétation
 
 Nos modèles sont relativement peu précis. Tous présentent un fonctionnement global proche de 40-50% (si on se concentre sur l'accuracy et les micro-averages). Les macro-averages sont en revanche bien moins bons. La différence entre les deux moyennes montrent qu'il existe une grande disparité d'efficacité selon la classe. On peut expliquer cette disparité par le fait que certaines classes ont très peu de données (quelques dizaines), les erreurs prennent donc plus de poids dans les métriques et leur faible volume rend la classification plus difficile. Les scores F1 montrent un équilibre entre la précision et le rappel.
