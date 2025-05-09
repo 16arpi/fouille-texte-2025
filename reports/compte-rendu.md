@@ -130,7 +130,7 @@ Nous voilà arrivé au bout de la chaîne de traitement des données! L'impléme
 # Prérequis
 ## Mise en place du dépôt
 
-Le dépôt à été initialisé selon un patron [cookiecutter data science](https://cookiecutter-data-science.drivendata.org/), on va donc profiter du Makefile pour nous faciliter la vie:
+Le [dépôt](https://github.com/16arpi/fouille-texte-2025) à été initialisé selon un patron [cookiecutter data science](https://cookiecutter-data-science.drivendata.org/), on va donc profiter du Makefile pour nous faciliter la vie:
 
 - Les scripts ont été testés sous Python 3.12, le Makefile s'attend donc à trouver un exécutable `python3.12` dans le `PATH`.
 - Certains des paquets nécessaires ayant des contraintes de dépendances folkloriques, il est fortement peu recommandé d'essayer d'innover sur la manière de créer l'environnement virtuel et d'installer les dépendances, ainsi:
