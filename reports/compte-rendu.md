@@ -191,7 +191,7 @@ La sélection s'est faite par l'outil `xan`:
 ```
 xan sample 10000 data/processed/frwikisource-dev-tiny.csv
 ```
-Échantillonnage malheureusement sans graine, donc difficilement reproductible, c'est donc ce fichier *exactement* qui est disponible via `make download_data` pour reproduire les expériences suivantes.
+Échantillonnage malheureusement sans graine, donc difficilement reproductible, c'est donc ce fichier *exactement* (convertit en parquet) qui est disponible via `make download_data` pour reproduire les expériences suivantes.
 
 # Expériences
 
@@ -322,6 +322,6 @@ Enfin, nos ordinateurs présentant des capacités de calcul limitées, nous n'av
 
 Pour améliorer les résultats de nos classifieurs et affiner la classification temporelle, nous pourrions envisager les pistes d'amélioration suivantes :
 
-- Augmenter notre dataset d'entraînement en ayant recours à une machine plus puissante. L'augmentation concernerait autant le nombre de documents que de _features_. (Un test rapide sur `data/processed/frwikisource-dev-tiny.parquet`, qui fait ~47K lignes, mène en moyenne à des résultats qui gagnent 0.02 points, dans les grandes lignes. Il faudrait arriver à paralléliser les calculs pour arriver au terme d'un test sur son grand frère `data/processed/frwikisource-dev.parquet` de ~315K lignes...).
+- Augmenter notre dataset d'entraînement en ayant recours à une machine plus puissante. L'augmentation concernerait autant le nombre de documents que de _features_. (Un test rapide sur `data/processed/frwikisource-dev-tiny.parquet`, qui fait ~47K lignes, mène en moyenne à des résultats qui gagnent 0.02 points, dans les grandes lignes. Il faudrait arriver à paralléliser les calculs pour arriver au terme d'un test sur son grand frère de ~315K lignes, `data/processed/frwikisource-dev.parquet`...).
 - Changer de source de données pour obtenir des transcriptions de textes anciens et récents directement depuis leurs originaux (et non de traductions ou de réécritures). Cela pourrait passer par une océrisation de scans, comme le propose Gallica par exemple (ce que nous avions envisagé initialement d'ailleurs).
 - Trouver d'autres manières de produire une représentation vectorielle des documents. La nôtre est très lexicale, nous pourrions envisager des représentations plus sémantiques, comme BERT par exemple.
