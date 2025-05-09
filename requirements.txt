@@ -15,6 +15,7 @@ polars
 polars-splitters
 altair
 vegafusion[embed]
+vl-convert-python
 wikitextparser
 evaluate
 -e .

@@ -2,6 +2,7 @@
 
 
 from loguru import logger
+import altair as alt
 import polars as pl
 import typer
 
@@ -16,6 +17,9 @@ from fouille.config import (
 	GOLD_CATEGORIES_VIZ,
 )
 
+# Let vegafusion trim the embedded data
+# c.f., https://altair-viz.github.io/user_guide/large_datasets.html
+#alt.data_transformers.enable("vegafusion")
 app = typer.Typer()
 
 
@@ -127,32 +131,36 @@ def plot_gold_categories_distribution() -> None:
 
 	# Pages (i.e., rows) per individual category distribution
 	chart = (
-		distrib.plot.bar(
-			x="semicentury",
-			y="pages",
-			color="semicentury",
+		alt.Chart(distrib)
+		.encode(
+			x="pages:Q",
+			y="semicentury:N",
+			text="pages:Q",
 		)
-		.properties(width=1024, title="Distribution par classe")
-		.configure_scale(zero=False)
-		.configure_axisX(tickMinStep=1)
+		.properties(
+			title="Distribution par classe",
+		)
 	)
-	chart.encoding.x.title = "Classe"
-	chart.encoding.y.title = "Pages"
+	chart.encoding.x.title = "Nombre d'articles"
+	chart.encoding.y.title = "Classe"
+	chart = chart.mark_bar(tooltip=True) + chart.mark_text(align="left", dx=2)
 	chart.save(GOLD_CATEGORIES_VIZ)
 
 	# Maybe slightly more telling, *characters* per category
 	chart = (
-		distrib.plot.bar(
-			x="semicentury",
-			y="characters",
-			color="semicentury",
+		alt.Chart(distrib)
+		.encode(
+			x="characters:Q",
+			y="semicentury:N",
+			text="characters:Q",
 		)
-		.properties(width=1024, title="Distribution par classe")
-		.configure_scale(zero=False)
-		.configure_axisX(tickMinStep=1)
+		.properties(
+			title="Distribution par classe",
+		)
 	)
-	chart.encoding.x.title = "Classe"
-	chart.encoding.y.title = "Signes"
+	chart.encoding.x.title = "Signes"
+	chart.encoding.y.title = "Classe"
+	chart = chart.mark_bar(tooltip=True) + chart.mark_text(align="left", dx=2)
 	chart.save(CLEAN_CATEGORIES_VIZ.with_stem(GOLD_CATEGORIES_VIZ.stem + "-chars"))
 
 	logger.success("Plot generation complete.")
