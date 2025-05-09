@@ -127,9 +127,41 @@ On suit le schéma classique [train/dev/test à 80/10/10](https://github.com/16a
 
 Nous voilà arrivé au bout de la chaîne de traitement des données! L'implémentation a été effectuée par Damien; César s'est concentré sur la classification et l'évaluation, que nous allons maintenant aborder.
 
-# Expériences
-
+# Prérequis
 ## Mise en place du dépôt
+
+Le dépôt à été initialisé selon un patron [cookiecutter data science](https://cookiecutter-data-science.drivendata.org/), on va donc profiter du Makefile pour nous faciliter la vie:
+
+- Les scripts ont été testés sous Python 3.12, le Makefile s'attend donc à trouver un exécutable `python3.12` dans le `PATH`.
+- Certains des paquets nécessaires ayant des contraintes de dépendances folkloriques, il est fortement peu recommandé d'essayer d'innover sur la manière de créer l'environnement virtuel et d'installer les dépendances, ainsi:
+- Pour créer l'environnement virtuel, tapez `make create_environment`, et suivez les instructions pour l'activer (comme d'habitude, `source .venv/bin/activate`).
+- Tapez `make requirements` pour installer les paquets nécessaires. En cas de problème, le fichier `frozen-requirements.txt` liste des dépendances *fixes*, mais il ne devait idéalement pas être nécessaire!
+
+## Gestion des données
+
+Le volume des données utilisées étant assez conséquent, elles sont toutes stockées sur un bucket S3 auquel nous avons tous les deux accès. Afin de faciliter la reproductibilité des expériences, les sous-corpus finaux sont aussi disponibles publiquement, et peuvent être téléchargés via `make download_data`.
+
+Sinon, pour les reproduire de A à Z, le pipeline d'extraction et de traitement des données est le suivant:
+
+```bash
+## Téléchargement & XML -> dict (data/make_dataset.sh)
+# Nécéssite ~24GB de RAM, mais ne devrait prendre qu'une poignée de minutes.
+make make_raw_dataset
+
+## Extraction des données (data/extract_data.py)
+# Nécessite ~16GB de RAM, et va prendre *au mieux* 2H30!
+make extract_data
+
+## Traitement des catégories et création des classes finales (fouille/dataset.py)
+# Nécessite moins de 8GB de RAM, et devrait prendre moins d'une minute.
+make data
+```
+
+Chaque étape créé une copie des données, donc on arrive assez facilement à presque ~20GB de stockage occupé en fin de chaîne, c'est potentiellement aussi un facteur à prendre en compte.
+
+(Je travaille sur un tmpfs pour évacuer tout problème de performances I/O, mais forcément ça implique potentiellement encore plus de contraintes sur la pression mémoire, donc YMMV sur une machine avec < 48GB de RAM).
+
+# Expériences
 
 # Résultats
 
