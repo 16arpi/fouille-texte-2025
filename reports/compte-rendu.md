@@ -177,13 +177,21 @@ La tokenisation faite, il fallait ensuite construire pour chaque document une re
 
 ## Division en corpus d'entraînement et d'évaluation
 
-Nos vecteurs en poche, la dernière étape de préparation de nos donées a été de diviser notre corpus en 4 sous-corpus :
+Nos vecteurs en poche, la dernière étape de préparation de nos données a été de diviser notre corpus en 4 sous-corpus :
 - Un ensemble de vecteurs d'entraînement
 - Leur classe respective
 - Un ensemble de vecteurs d'évaluation
 - Leur classe respective
 
 La partition choisie est de 80%/20%. Cette étape a été possible grâce à la méthode `train_test_split()` de Sci-Kit Learn.
+
+NOTE: Comme on l'explique en conclusion, malgré le partitionnement initial des données, on a travaillé sur un ensemble encore plus restreint pour des questions de performances, d'où la 3e passe de partitionnement de données!
+
+La sélection s'est faite par l'outil `xan`:
+```
+xan sample 10000 data/processed/frwikisource-dev-tiny.csv
+```
+Échantillonnage malheureusement sans graine, donc difficilement reproductible, c'est donc ce fichier *exactement* qui est disponible via `make download_data` pour reproduire les expériences suivantes.
 
 # Expériences
 
