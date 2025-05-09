@@ -1,13 +1,12 @@
+import sys
+
 import pandas as pd
-
-import csv, sys
-
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from sklearn import tree, naive_bayes, svm, neural_network
+from sklearn import naive_bayes, neural_network, svm, tree
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 folder = sys.argv[1]
 
-labels = [1450, 1500,1550,1600,1650,1700,1750,1800,1850,1900,1950,2000]
+labels = [1450, 1500, 1550, 1600, 1650, 1700, 1750, 1800, 1850, 1900, 1950, 2000]
 
 
 print("loading csv")
@@ -43,9 +42,12 @@ nb_y_pred = nb_train.predict(X_test)
 # MLP
 print("Perceptron...")
 mlp_train = neural_network.MLPClassifier(
-    alpha=1e-5,
-    hidden_layer_sizes=(100, 100, ),
-    random_state=1
+	alpha=1e-5,
+	hidden_layer_sizes=(
+		100,
+		100,
+	),
+	random_state=1,
 )
 print("- fit")
 mlp_train = mlp_train.fit(X_train, y_train)
@@ -82,7 +84,7 @@ print("SVM accuracy", svm_accuracy)
 print("Naive Bayes accuracy", nb_accuracy)
 print("MLP accuracy", mlp_accuracy)
 
-pd.DataFrame(clf_confusion, index=labels, columns=labels).to_csv(f"confusion/clf_confusion.csv")
-pd.DataFrame(svm_confusion, index=labels, columns=labels).to_csv(f"confusion/svm_confusion.csv")
-pd.DataFrame(nb_confusion, index=labels, columns=labels).to_csv(f"confusion/nb_confusion.csv")
-pd.DataFrame(mlp_confusion, index=labels, columns=labels).to_csv(f"confusion/mlp_confusion.csv")
+pd.DataFrame(clf_confusion, index=labels, columns=labels).to_csv("confusion/clf_confusion.csv")
+pd.DataFrame(svm_confusion, index=labels, columns=labels).to_csv("confusion/svm_confusion.csv")
+pd.DataFrame(nb_confusion, index=labels, columns=labels).to_csv("confusion/nb_confusion.csv")
+pd.DataFrame(mlp_confusion, index=labels, columns=labels).to_csv("confusion/mlp_confusion.csv")
