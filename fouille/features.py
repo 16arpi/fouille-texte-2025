@@ -10,12 +10,12 @@ from sklearn.model_selection import train_test_split
 import tiktoken as tk
 import typer
 
-from fouille.config import PROCESSED_DATA_DIR
+from fouille.config import PROCESSED_DATA_DIR, MICRO_DEV_DATASET
 
 app = typer.Typer()
 
 # Arguments
-# $1 : csv file of text and semicenturies
+# $1 : csv file of text and semicenturies (e.g., MICRO_DEV_DATASET)
 
 TIKTOKEN = tk.get_encoding("o200k_base")
 REGEXP = re.compile(r"[^\s\.;,]+")
@@ -37,7 +37,7 @@ def vectorize(input_csv: Path) -> None:
 	texts = data["text"]
 	cats = data["semicentury"]
 
-	vectorizer = CountVectorizer(analyzer=regex, min_df=0.05)
+	vectorizer = CountVectorizer(analyzer=anal, min_df=0.05)
 
 	print("vectorizing")
 	X = vectorizer.fit_transform(texts)

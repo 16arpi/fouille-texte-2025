@@ -31,6 +31,7 @@ TEST_DATASET = PROCESSED_DATA_DIR / "frwikisource-test.parquet"
 DEV_DATASET = PROCESSED_DATA_DIR / "frwikisource-dev.parquet"
 TINY_TEST_DATASET = PROCESSED_DATA_DIR / "frwikisource-test-tiny.parquet"
 TINY_DEV_DATASET = PROCESSED_DATA_DIR / "frwikisource-dev-tiny.parquet"
+MICRO_DEV_DATASET = PROCESSED_DATA_DIR / "frwikisource-dev-micro.csv"
 
 # Visualizations
 RAW_CATEGORIES = INTERIM_DATA_DIR / "raw-cats.csv"
