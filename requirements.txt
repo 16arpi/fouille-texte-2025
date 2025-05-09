@@ -13,6 +13,8 @@ zstandard
 pandas
 polars
 polars-splitters
+scikit-learn
+tiktoken
 altair
 vegafusion[embed]
 vl-convert-python

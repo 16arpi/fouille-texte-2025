@@ -1,29 +1,56 @@
-from pathlib import Path
+import sys, csv, re, os
+import tiktoken as tk
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split
 
-from loguru import logger
-from tqdm import tqdm
-import typer
+# Arguments
+# $1 : csv file of text and semicenturies
+# $2 : output directory for X_train, X_test, y_train and y_test csv
 
-from fouille.config import PROCESSED_DATA_DIR
+TIKTOKEN = tk.get_encoding("o200k_base")
+REGEXP = re.compile(r'[^\s\.;,]+')
 
-app = typer.Typer()
+folder = sys.argv[2]
 
+def anal(str):
+    return TIKTOKEN.encode(str)
 
-@app.command()
-def main(
-	# ---- REPLACE DEFAULT PATHS AS APPROPRIATE ----
-	input_path: Path = PROCESSED_DATA_DIR / "dataset.csv",
-	output_path: Path = PROCESSED_DATA_DIR / "features.csv",
-	# -----------------------------------------
-):
-	# ---- REPLACE THIS WITH YOUR OWN CODE ----
-	logger.info("Generating features from dataset...")
-	for i in tqdm(range(10), total=10):
-		if i == 5:
-			logger.info("Something happened for iteration 5.")
-	logger.success("Features generation complete.")
-	# -----------------------------------------
+def regex(str):
+    return [a for a in REGEXP.finditer(str)]
 
+print("reading csv")
+data = pd.read_csv(sys.argv[1])
+texts = data["text"]
+cats = data["semicentury"]
 
-if __name__ == "__main__":
-	app()
+vectorizer = CountVectorizer(analyzer=regex, min_df=0.05)
+
+print("vectorizing")
+X = vectorizer.fit_transform(texts)
+
+#data_frame = pd.DataFrame(X.toarray(), columns=vectorizer.get_feature_names_out())
+columns = [TIKTOKEN.decode([m]) for m in vectorizer.get_feature_names_out()]
+columns = vectorizer.get_feature_names_out()
+
+print("to train/test")
+X_train, X_test, y_train, y_test = train_test_split(X, cats, test_size=0.2, random_state=0)
+
+print("to csv")
+pd.DataFrame(
+    X_train.toarray(),
+    columns=columns
+).to_csv(f"{folder}/X_train.csv", index=False)
+pd.DataFrame(
+    X_test.toarray(),
+    columns=columns
+).to_csv(f"{folder}/X_test.csv", index=False)
+pd.DataFrame(
+    y_train,
+    columns=["semicentury"]
+).to_csv(f"{folder}/y_train.csv", index=False)
+pd.DataFrame(
+    y_test,
+    columns=["semicentury"]
+).to_csv(f"{folder}/y_test.csv", index=False)
+
