@@ -141,7 +141,7 @@ Le [dépôt](https://github.com/16arpi/fouille-texte-2025) à été initialisé 
 
 ## Gestion des données
 
-Le volume des données utilisées étant assez conséquent, elles sont toutes stockées sur un bucket S3 auquel nous avons tous les deux accès. Afin de faciliter la reproductibilité des expériences, les sous-corpus finaux sont aussi disponibles publiquement, et peuvent être téléchargés via `make download_data` (c.f., [data/dl_data.sh](https://github.com/16arpi/fouille-texte-2025/blob/85c8c34a60fe840d629067da310e5e7eaa3a8313/data/dl_data.sh#L15-L23)).
+Le volume des données utilisées étant assez conséquent, elles sont toutes stockées sur un bucket S3 auquel nous avons tous les deux accès. Afin de faciliter la reproductibilité des expériences, les sous-corpus finaux sont aussi disponibles publiquement, et peuvent être téléchargés via `make download_data` (c.f., [data/dl_data.sh](https://github.com/16arpi/fouille-texte-2025/blob/dd8f4948366ca7415af62d2203d412d0308b1a85/data/dl_data.sh#L15-L24)).
 
 Sinon, pour les reproduire de A à Z, le pipeline d'extraction et de traitement des données est le suivant:
 
