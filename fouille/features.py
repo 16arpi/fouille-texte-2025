@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 import tiktoken as tk
 import typer
 
-from fouille.config import PROCESSED_DATA_DIR, MICRO_DEV_DATASET
+from fouille.config import PROCESSED_DATA_DIR
 
 app = typer.Typer()
 
@@ -50,10 +50,10 @@ def vectorize(input_parquet: Path) -> None:
 	X_train, X_test, y_train, y_test = train_test_split(X, cats, test_size=0.2, random_state=0)
 
 	print("to parquet")
-	pd.DataFrame(X_train.toarray(), columns=columns).to_parquet(f"{folder}/X_train.parquet", index=False)
-	pd.DataFrame(X_test.toarray(), columns=columns).to_parquet(f"{folder}/X_test.parquet", index=False)
-	pd.DataFrame(y_train, columns=["semicentury"]).to_parquet(f"{folder}/y_train.parquet", index=False)
-	pd.DataFrame(y_test, columns=["semicentury"]).to_parquet(f"{folder}/y_test.parquet", index=False)
+	pd.DataFrame(X_train.toarray(), columns=columns).to_parquet(f"{folder}/X_train.parquet", index=False, compression="zstd")
+	pd.DataFrame(X_test.toarray(), columns=columns).to_parquet(f"{folder}/X_test.parquet", index=False, compression="zstd")
+	pd.DataFrame(y_train, columns=["semicentury"]).to_parquet(f"{folder}/y_train.parquet", index=False, compression="zstd")
+	pd.DataFrame(y_test, columns=["semicentury"]).to_parquet(f"{folder}/y_test.parquet", index=False, compression="zstd")
 
 
 @app.command()
