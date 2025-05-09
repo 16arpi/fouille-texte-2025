@@ -16,11 +16,11 @@ def train_and_predict() -> None:
 
 	labels = [1450, 1500, 1550, 1600, 1650, 1700, 1750, 1800, 1850, 1900, 1950, 2000]
 
-	print("loading csv")
-	X_train = pd.read_csv(f"{folder}/X_train.csv")
-	X_test = pd.read_csv(f"{folder}/X_test.csv")
-	y_train = pd.read_csv(f"{folder}/y_train.csv").values.ravel()
-	y_test = pd.read_csv(f"{folder}/y_test.csv").values.ravel()
+	print("loading parquet")
+	X_train = pd.read_parquet(f"{folder}/X_train.parquet")
+	X_test = pd.read_parquet(f"{folder}/X_test.parquet")
+	y_train = pd.read_parquet(f"{folder}/y_train.parquet").values.ravel()
+	y_test = pd.read_parquet(f"{folder}/y_test.parquet").values.ravel()
 
 	# Decision tree
 	print("Decisions tree...")

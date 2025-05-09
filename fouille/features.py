@@ -15,7 +15,7 @@ from fouille.config import PROCESSED_DATA_DIR, MICRO_DEV_DATASET
 app = typer.Typer()
 
 # Arguments
-# $1 : csv file of text and semicenturies (e.g., MICRO_DEV_DATASET)
+# $1 : parquet file of text and semicenturies (e.g., MICRO_DEV_DATASET)
 
 TIKTOKEN = tk.get_encoding("o200k_base")
 REGEXP = re.compile(r"[^\s\.;,]+")
@@ -29,11 +29,11 @@ def regex(str):
 	return [a for a in REGEXP.finditer(str)]
 
 
-def vectorize(input_csv: Path) -> None:
+def vectorize(input_parquet: Path) -> None:
 	folder = PROCESSED_DATA_DIR
 
-	print("reading csv")
-	data = pd.read_csv(input_csv)
+	print("reading parquet")
+	data = pd.read_parquet(input_parquet)
 	texts = data["text"]
 	cats = data["semicentury"]
 
@@ -49,16 +49,16 @@ def vectorize(input_csv: Path) -> None:
 	print("to train/test")
 	X_train, X_test, y_train, y_test = train_test_split(X, cats, test_size=0.2, random_state=0)
 
-	print("to csv")
-	pd.DataFrame(X_train.toarray(), columns=columns).to_csv(f"{folder}/X_train.csv", index=False)
-	pd.DataFrame(X_test.toarray(), columns=columns).to_csv(f"{folder}/X_test.csv", index=False)
-	pd.DataFrame(y_train, columns=["semicentury"]).to_csv(f"{folder}/y_train.csv", index=False)
-	pd.DataFrame(y_test, columns=["semicentury"]).to_csv(f"{folder}/y_test.csv", index=False)
+	print("to parquet")
+	pd.DataFrame(X_train.toarray(), columns=columns).to_parquet(f"{folder}/X_train.parquet", index=False)
+	pd.DataFrame(X_test.toarray(), columns=columns).to_parquet(f"{folder}/X_test.parquet", index=False)
+	pd.DataFrame(y_train, columns=["semicentury"]).to_parquet(f"{folder}/y_train.parquet", index=False)
+	pd.DataFrame(y_test, columns=["semicentury"]).to_parquet(f"{folder}/y_test.parquet", index=False)
 
 
 @app.command()
-def main(input_csv: Path) -> None:
-	vectorize(input_csv)
+def main(input_parquet: Path) -> None:
+	vectorize(input_parquet)
 
 
 if __name__ == "__main__":
