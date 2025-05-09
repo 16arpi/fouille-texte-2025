@@ -165,7 +165,7 @@ Chaque étape créé une copie des données, donc on arrive assez facilement à 
 
 # Préparation des données vectorielles
 
-Une fois les documents téléchargés, une étape de vectorisation précède le déroulement des expériences. À cette étape, il s'agit de traduire les documents en vecteurs. Dans notre cas, nous avons opté pour un représentation vectorielle par sac de mot : chaque dimension correspondant à un mot du vocabulaire total et chaque valeur d'une dimension, la fréquence du mot dans le document. Pour cela, deux choix s'imposent : comment déterminer ce qu'est un mot ? comment construire ces vecteurs ?
+Une fois les documents téléchargés, [une étape de vectorisation](https://github.com/16arpi/fouille-texte-2025/blob/classifiers/fouille/features.py) précède le déroulement des expériences. À cette étape, il s'agit de traduire les documents en vecteurs. Dans notre cas, nous avons opté pour un représentation vectorielle par sac de mot : chaque dimension correspondant à un mot du vocabulaire total et chaque valeur d'une dimension, la fréquence du mot dans le document. Pour cela, deux choix s'imposent : comment déterminer ce qu'est un mot ? comment construire ces vecteurs ?
 
 ## Tokenisation
 
@@ -195,7 +195,7 @@ xan sample 10000 data/processed/frwikisource-dev-tiny.csv
 
 # Expériences
 
-Les expériences ont consistés à tester quatre méthodes de classification supervisée, toutes proposées par SciKit-Learn :
+Les expériences ont consistés à tester [quatre méthodes de classification supervisée](https://github.com/16arpi/fouille-texte-2025/blob/classifiers/fouille/modeling/models.py), toutes proposées par SciKit-Learn :
 
 - Un _arbre de décision (DecisionTree)_. Le choix des disciminants se fait par l'indice de Gini.
 - Un _Support Vector Machine (SVC)_. Dans notre cas, le SVM utile un kernel RBF (Radial Basis Function).
